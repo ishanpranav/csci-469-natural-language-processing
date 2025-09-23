@@ -2,6 +2,10 @@
 // Copyright (c) 2025 Ishan Pranav
 // Licensed under the MIT license.
 
+// References:
+//  - https://en.wikipedia.org/wiki/Viterbi_algorithm#Pseudocode
+//  - https://medium.com/data-science-in-your-pocket/pos-tagging-using-hidden-markov-models-hmm-viterbi-algorithm-in-nlp-mathematics-explained-d43ca89347c4
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -72,7 +76,7 @@ internal static class Program
             tags.Count,
             tags.SelectMany(x => x.Emissions).Count(),
             tags.SelectMany(x => x.Transitions).Count(),
-            tags.SelectMany(x => x.Emissions).Sum(x => x.Value),
-            tags.SelectMany(x => x.Transitions).Sum(x => x.Value));
+            tags.Sum(x => x.TotalEmissions),
+            tags.Sum(x => x.TotalTransitions));
     }
 }

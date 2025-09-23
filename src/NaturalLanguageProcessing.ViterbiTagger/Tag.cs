@@ -18,6 +18,8 @@ internal sealed class Tag : IEquatable<Tag>
     }
 
     public string Value { get; }
+    public int TotalEmissions { get; private set; }
+    public int TotalTransitions { get; private set; }
 
     public IReadOnlyDictionary<string, int> Emissions
     {
@@ -37,6 +39,8 @@ internal sealed class Tag : IEquatable<Tag>
 
     public void AddEmission(string word)
     {
+        TotalEmissions++;
+
         if (_emissions.TryGetValue(word, out int count))
         {
             _emissions[word] = count + 1;
@@ -49,7 +53,9 @@ internal sealed class Tag : IEquatable<Tag>
 
     public void AddTransition(Tag next)
     {
-        if(_transitions.TryGetValue(next, out int count))
+        TotalTransitions++;
+
+        if (_transitions.TryGetValue(next, out int count))
         {
             _transitions[next] = count + 1;
         }
