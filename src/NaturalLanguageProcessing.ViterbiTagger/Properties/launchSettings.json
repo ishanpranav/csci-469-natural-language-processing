@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "NaturalLanguageProcessing.ViterbiTagger": {
+      "commandName": "Project",
+      "commandLineArgs": "\"C:\\Users\\ishan\\source\\Repos\\viterbi-hmm-pos-tagger\\data\\WSJ_02-21.pos\""
+    }
+  }
+}
