@@ -7,8 +7,8 @@ distributed under the MIT license.
 ## Usage
 
 ```sh
-cat WSJ_02-21.pos WSJ_24.pos >pos_file.pos
-cat WSJ_23.words WSJ_24.words >words_file.words
+cat WSJ_02-21.pos WSJ_24.pos > pos_file.pos
+cat WSJ_23.words WSJ_24.words > words_file.words
 ./NaturalLanguageProcessing.ViterbiTagger words_file.words pos_file.pos > submission.pos
 ```
 
