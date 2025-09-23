@@ -43,6 +43,7 @@ internal static class Program
         //    tags.Sum(x => x.TotalEmissions),
         //    tags.Sum(x => x.TotalTransitions));
     }
+
     private static void CheckFile(string fileName)
     {
         if (!File.Exists(fileName))
