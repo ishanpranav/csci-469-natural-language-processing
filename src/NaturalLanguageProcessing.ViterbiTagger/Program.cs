@@ -21,7 +21,8 @@ internal static class Program
 
     private static readonly Dictionary<string, int> tags = new Dictionary<string, int>()
     {
-        { SentenceStart, 0 }
+        { SentenceStart, 0 },
+        { SentenceEnd, 0 }
     };
     private static readonly Dictionary<(string Tag, string Word), double> likelihood =
         new Dictionary<(string Tag, string Word), double>();
@@ -43,7 +44,6 @@ internal static class Program
         CheckFile(posFileName);
         CheckFile(wordsFileName);
         ReadPosFile(posFileName);
-        TagFile(wordsFileName);
 
         Console.WriteLine("Words: {0:n0}\nTags: {1:n0}\nEmissions: {2:n0}\nTransitions: {3:n0}\nTotal emissions: {4:n0}\nTotal transitions: {5:n0}",
             -1,
@@ -62,6 +62,10 @@ internal static class Program
         {
             transition[key] /= tags[key.Source];
         }
+
+        tags.Remove(SentenceStart);
+        tags.Remove(SentenceEnd);
+        TagFile(wordsFileName);
 
         //Console.WriteLine("Transitions (top 100):");
 
@@ -133,8 +137,8 @@ internal static class Program
         }
 
         string[] segments = line.Split();
-        string word = segments[0];
-        string tag = segments[1];
+        string word = segments[0].ToUpperInvariant();
+        string tag = segments[1].ToUpperInvariant();
 
         return (tag, word);
     }
@@ -179,25 +183,92 @@ internal static class Program
 
     private static IEnumerable<string> TagSentence(List<string> sentence)
     {
-        //Dictionary<string, double> viterbi = new Dictionary<Tag, double>()
-        //{
-        //    { Tag.SentenceStart, 1 }
-        //};
-        //Dictionary<Tag, Tag> backpointer = new Dictionary<Tag, Tag>()
-        //{
-        //    { Tag.SentenceStart, Tag.SentenceStart }
-        //};
+        int n = tags.Count;
+        int f = n + 1;
+        string[] q = new string[n + 2];
 
-        //foreach (Tag q in s_tags)
-        //{
-        //    viterbi[q, 
-        //}
+        q[0] = SentenceStart;
 
-        //foreach (string word in sentence)
-        //{
+        tags.Keys.CopyTo(q, index: 1);
 
-        //}
+        q[f] = SentenceEnd;
 
-        yield break;
+        double[,] a = new double[n + 2, n + 2];
+
+        for (int i = 0; i < f; i++)
+        {
+            for (int j = 0; j < f; j++)
+            {
+                a[i, j] = transition.GetValueOrDefault((q[i], q[j]));
+            }
+        }
+
+        int t = sentence.Count;
+        double[,] b = new double[n + 1, t];
+
+        for (int i = 0; i <= n; i++)
+        {
+            for (int u = 0; u < t; u++)
+            {
+                b[i, u] = likelihood.GetValueOrDefault((q[i], sentence[u].ToUpperInvariant()));
+            }
+        }
+
+        double[,] viterbi = new double[n + 2, t];
+        int[,] backpointer = new int[n + 2, t];
+
+        for (int i = 1; i <= n; i++)
+        {
+            viterbi[i, 0] = a[0, i] * b[i, 0];
+            backpointer[i, 0] = 0;
+        }
+
+        for (int u = 1; u < t; u++)
+        {
+            for (int i = 1; i <= n; i++)
+            {
+                viterbi[i, u] = viterbi[1, u - 1] * a[1, i] * b[i, u];
+                backpointer[i, u] = 1;
+
+                for (int j = 2; j <= n; j++)
+                {
+                    double next = viterbi[j, u - 1] * a[j, i] * b[i, u];
+
+                    if (next > viterbi[i, u])
+                    {
+                        viterbi[i, u] = next;
+                        backpointer[i, u] = j;
+                    }
+                }
+            }
+        }
+
+        viterbi[f, t - 1] = viterbi[1, t - 1] * a[1, f];
+        backpointer[f, t - 1] = 1;
+
+        for (int i = 2; i <= n; i++)
+        {
+            double next = viterbi[i, t - 1] * a[i, f];
+
+            if (next > viterbi[f, t - 1])
+            {
+                viterbi[f, t - 1] = next;
+                backpointer[f, t - 1] = i;
+            }
+        }
+
+        int[] results = new int[t];
+
+        results[t - 1] = backpointer[f, t - 1];
+
+        for (int u = t - 2; u >= 0; u--)
+        {
+            results[u] = backpointer[results[u + 1], u + 1];
+        }
+
+        foreach (int i in results)
+        {
+            yield return q[i];
+        }
     }
 }
