@@ -10,13 +10,23 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 
 namespace NaturalLanguageProcessing.ViterbiTagger;
 
 internal static class Program
 {
-    private static readonly TagCollection s_tags = new TagCollection();
-    private static readonly HashSet<string> s_words = new HashSet<string>();
+    private const string SentenceStart = "Begin_Sent";
+    private const string SentenceEnd = "End_Sent";
+
+    private static readonly Dictionary<string, int> tags = new Dictionary<string, int>()
+    {
+        { SentenceStart, 0 }
+    };
+    private static readonly Dictionary<(string Tag, string Word), double> likelihood =
+        new Dictionary<(string Tag, string Word), double>();
+    private static readonly Dictionary<(string Source, string Target), double> transition =
+        new Dictionary<(string Source, string Target), double>();
 
     private static void Main(string[] args)
     {
@@ -35,13 +45,34 @@ internal static class Program
         ReadPosFile(posFileName);
         TagFile(wordsFileName);
 
-        //Console.WriteLine("Words: {0:n0}\nTags: {1:n0}\nEmissions: {2:n0}\nTransitions: {3:n0}\nTotal emissions: {4:n0}\nTotal transitions: {5:n0}",
-        //    words.Count,
-        //    tags.Count,
-        //    tags.SelectMany(x => x.Emissions).Count(),
-        //    tags.SelectMany(x => x.Transitions).Count(),
-        //    tags.Sum(x => x.TotalEmissions),
-        //    tags.Sum(x => x.TotalTransitions));
+        Console.WriteLine("Words: {0:n0}\nTags: {1:n0}\nEmissions: {2:n0}\nTransitions: {3:n0}\nTotal emissions: {4:n0}\nTotal transitions: {5:n0}",
+            -1,
+            -1,
+            tags.Sum(x => x.Value),
+            -1,
+            likelihood.Sum(x => x.Value),
+            transition.Sum(x => x.Value));
+
+        foreach ((string Tag, string Word) key in likelihood.Keys)
+        {
+            likelihood[key] /= tags[key.Tag];
+        }
+
+        foreach ((string Source, string Target) key in transition.Keys)
+        {
+            transition[key] /= tags[key.Source];
+        }
+
+        //Console.WriteLine("Transitions (top 100):");
+
+        //foreach (KeyValuePair<(string Source, string Target), double> entry in transition
+        //    .OrderByDescending(x => x.Value)
+        //    .Take(100))
+        //{
+        //    Console.WriteLine("{0}: {1} [{2:p4}]", entry.Key.Source, entry.Key.Target, entry.Value);
+        //}
+
+
     }
 
     private static void CheckFile(string fileName)
@@ -58,37 +89,54 @@ internal static class Program
         using StreamReader reader = File.OpenText(fileName);
 
         string? line;
-        Tag? previous = null;
+        string previousTag = SentenceStart;
 
         while ((line = reader.ReadLine()) != null)
         {
-            if (string.IsNullOrWhiteSpace(line))
+            if (previousTag == SentenceStart)
             {
-                continue;
+                tags[SentenceStart]++;
             }
 
-            string[] segments = line.Split();
-            string word = segments[0];
-            string tag = segments[1];
+            (string tag, string? word) = ParseLine(line);
+            (string, string) key;
 
-            s_words.Add(word);
-
-            if (!s_tags.TryGetValue(tag, out Tag? current))
+            if (word != null)
             {
-                current = new Tag(tag);
+                key = (tag, word);
 
-                s_tags.Add(current);
+                likelihood[key] = likelihood.GetValueOrDefault(key) + 1;
             }
 
-            current.AddEmission(word);
+            tags[tag] = tags.GetValueOrDefault(tag) + 1;
 
-            if (previous != null)
+            key = (previousTag, tag);
+
+            transition[key] = transition.GetValueOrDefault(key) + 1;
+
+            if (tag == SentenceEnd)
             {
-                previous.AddTransition(current);
+                previousTag = SentenceStart;
             }
-
-            previous = current;
+            else
+            {
+                previousTag = tag;
+            }
         }
+    }
+
+    private static (string tag, string? word) ParseLine(string? line)
+    {
+        if (string.IsNullOrWhiteSpace(line))
+        {
+            return (SentenceEnd, null);
+        }
+
+        string[] segments = line.Split();
+        string word = segments[0];
+        string tag = segments[1];
+
+        return (tag, word);
     }
 
     private static void TagFile(string fileName)
@@ -96,10 +144,60 @@ internal static class Program
         using StreamReader reader = File.OpenText(fileName);
 
         string? line;
+        List<string> current = new List<string>();
+        List<List<string>> sentences = new List<List<string>>();
 
         while ((line = reader.ReadLine()) != null)
         {
-
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                RealizeSentence(sentences, current);
+            }
+            else
+            {
+                current.Add(line);
+            }
         }
+
+        RealizeSentence(sentences, current);
+    }
+
+    private static void RealizeSentence(List<List<string>> sentences, List<string> current)
+    {
+        if (current.Count == 0)
+        {
+            return;
+        }
+
+        foreach ((string tag, string word) in current.Zip(TagSentence(current)))
+        {
+            Console.WriteLine("{0} {1}", word, tag);
+        }
+
+        current.Clear();
+    }
+
+    private static IEnumerable<string> TagSentence(List<string> sentence)
+    {
+        //Dictionary<string, double> viterbi = new Dictionary<Tag, double>()
+        //{
+        //    { Tag.SentenceStart, 1 }
+        //};
+        //Dictionary<Tag, Tag> backpointer = new Dictionary<Tag, Tag>()
+        //{
+        //    { Tag.SentenceStart, Tag.SentenceStart }
+        //};
+
+        //foreach (Tag q in s_tags)
+        //{
+        //    viterbi[q, 
+        //}
+
+        //foreach (string word in sentence)
+        //{
+
+        //}
+
+        yield break;
     }
 }
