@@ -45,13 +45,13 @@ internal static class Program
         CheckFile(wordsFileName);
         ReadPosFile(posFileName);
 
-        Console.WriteLine("Words: {0:n0}\nTags: {1:n0}\nEmissions: {2:n0}\nTransitions: {3:n0}\nTotal emissions: {4:n0}\nTotal transitions: {5:n0}",
-            -1,
-            -1,
-            tags.Sum(x => x.Value),
-            -1,
-            likelihood.Sum(x => x.Value),
-            transition.Sum(x => x.Value));
+        //Console.WriteLine("Words: {0:n0}\nTags: {1:n0}\nEmissions: {2:n0}\nTransitions: {3:n0}\nTotal emissions: {4:n0}\nTotal transitions: {5:n0}",
+        //    -1,
+        //    -1,
+        //    tags.Sum(x => x.Value),
+        //    -1,
+        //    likelihood.Sum(x => x.Value),
+        //    transition.Sum(x => x.Value));
 
         foreach ((string Tag, string Word) key in likelihood.Keys)
         {
@@ -66,17 +66,6 @@ internal static class Program
         tags.Remove(SentenceStart);
         tags.Remove(SentenceEnd);
         TagFile(wordsFileName);
-
-        //Console.WriteLine("Transitions (top 100):");
-
-        //foreach (KeyValuePair<(string Source, string Target), double> entry in transition
-        //    .OrderByDescending(x => x.Value)
-        //    .Take(100))
-        //{
-        //    Console.WriteLine("{0}: {1} [{2:p4}]", entry.Key.Source, entry.Key.Target, entry.Value);
-        //}
-
-
     }
 
     private static void CheckFile(string fileName)
@@ -173,10 +162,12 @@ internal static class Program
             return;
         }
 
-        foreach ((string tag, string word) in current.Zip(TagSentence(current)))
+        foreach ((string tag, string word) in TagSentence(current).Zip(current))
         {
-            Console.WriteLine("{0} {1}", word, tag);
+            Console.WriteLine("{0}\t{1}", word, tag);
         }
+
+        Console.WriteLine();
 
         current.Clear();
     }
@@ -210,7 +201,12 @@ internal static class Program
         {
             for (int u = 0; u < t; u++)
             {
-                b[i, u] = likelihood.GetValueOrDefault((q[i], sentence[u].ToUpperInvariant()));
+                (string Tag, string Word) key = (q[i], sentence[u].ToUpperInvariant());
+
+                if (!likelihood.TryGetValue(key, out b[i, u]))
+                {
+                    b[i, u] = 0.001;
+                }
             }
         }
 

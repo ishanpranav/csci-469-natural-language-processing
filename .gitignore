@@ -417,4 +417,7 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
+# viterbi-hmm-pos-tagger
+
 *.sln
+submission.pos
