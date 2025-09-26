@@ -24,10 +24,10 @@ internal static class Program
         { SentenceStart, 0 },
         { SentenceEnd, 0 }
     };
-    private static readonly Dictionary<(string Tag, string Word), double> likelihood =
-        new Dictionary<(string Tag, string Word), double>();
-    private static readonly Dictionary<(string Source, string Target), double> transition =
-        new Dictionary<(string Source, string Target), double>();
+    private static readonly Dictionary<(string Tag, string Word), int> likelihood =
+        new Dictionary<(string Tag, string Word), int>();
+    private static readonly Dictionary<(string Source, string Target), int> transition =
+        new Dictionary<(string Source, string Target), int>();
 
     private static void Main(string[] args)
     {
@@ -44,27 +44,6 @@ internal static class Program
         CheckFile(posFileName);
         CheckFile(wordsFileName);
         ReadPosFile(posFileName);
-
-        //Console.WriteLine("Words: {0:n0}\nTags: {1:n0}\nEmissions: {2:n0}\nTransitions: {3:n0}\nTotal emissions: {4:n0}\nTotal transitions: {5:n0}",
-        //    -1,
-        //    -1,
-        //    tags.Sum(x => x.Value),
-        //    -1,
-        //    likelihood.Sum(x => x.Value),
-        //    transition.Sum(x => x.Value));
-
-        foreach ((string Tag, string Word) key in likelihood.Keys)
-        {
-            likelihood[key] /= tags[key.Tag];
-        }
-
-        foreach ((string Source, string Target) key in transition.Keys)
-        {
-            transition[key] /= tags[key.Source];
-        }
-
-        tags.Remove(SentenceStart);
-        tags.Remove(SentenceEnd);
         TagFile(wordsFileName);
     }
 
@@ -174,6 +153,12 @@ internal static class Program
 
     private static IEnumerable<string> TagSentence(List<string> sentence)
     {
+        int sentenceStart = tags[SentenceStart];
+        int sentenceEnd = tags[SentenceEnd];
+
+        tags.Remove(SentenceStart);
+        tags.Remove(SentenceEnd);
+
         int n = tags.Count;
         int f = n + 1;
         string[] q = new string[n + 2];
@@ -181,6 +166,8 @@ internal static class Program
         q[0] = SentenceStart;
 
         tags.Keys.CopyTo(q, index: 1);
+        tags[SentenceStart] = sentenceStart;
+        tags[SentenceEnd] = sentenceEnd;
 
         q[f] = SentenceEnd;
 
@@ -190,7 +177,9 @@ internal static class Program
         {
             for (int j = 0; j < f; j++)
             {
-                a[i, j] = transition.GetValueOrDefault((q[i], q[j]));
+                string source = q[i];
+
+                a[i, j] = transition.GetValueOrDefault((source, q[j])) / tags[source];
             }
         }
 
@@ -203,7 +192,11 @@ internal static class Program
             {
                 (string Tag, string Word) key = (q[i], sentence[u].ToUpperInvariant());
 
-                if (!likelihood.TryGetValue(key, out b[i, u]))
+                if (likelihood.TryGetValue(key, out int count))
+                {
+                    b[i, u] = count / tags[key.Tag];
+                }
+                else
                 {
                     b[i, u] = 0.001;
                 }
