@@ -18,6 +18,7 @@ internal static class Program
 {
     private const string SentenceStart = "Begin_Sent";
     private const string SentenceEnd = "End_Sent";
+    private const int SmoothingK = 1;
 
     private static readonly Dictionary<string, int> tags = new Dictionary<string, int>()
     {
@@ -166,9 +167,9 @@ internal static class Program
         q[0] = SentenceStart;
 
         tags.Keys.CopyTo(q, index: 1);
+
         tags[SentenceStart] = sentenceStart;
         tags[SentenceEnd] = sentenceEnd;
-
         q[f] = SentenceEnd;
 
         double[,] a = new double[n + 2, n + 2];
@@ -179,7 +180,7 @@ internal static class Program
             {
                 string source = q[i];
 
-                a[i, j] = transition.GetValueOrDefault((source, q[j])) / tags[source];
+                a[i, j] = (double)transition.GetValueOrDefault((source, q[j])) / tags[source];
             }
         }
 
@@ -194,7 +195,7 @@ internal static class Program
 
                 if (likelihood.TryGetValue(key, out int count))
                 {
-                    b[i, u] = count / tags[key.Tag];
+                    b[i, u] = (double)(count + SmoothingK) / (tags[key.Tag] + SmoothingK);
                 }
                 else
                 {
