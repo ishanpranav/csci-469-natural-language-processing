@@ -135,6 +135,7 @@ internal static class Program
     private static void TagFile(string fileName)
     {
         using StreamReader reader = File.OpenText(fileName);
+        using StreamWriter writer = File.CreateText("submission.pos");
 
         string? line;
         List<string> current = new List<string>();
@@ -144,7 +145,7 @@ internal static class Program
         {
             if (string.IsNullOrWhiteSpace(line))
             {
-                RealizeSentence(sentences, current);
+                RealizeSentence(writer, sentences, current);
             }
             else
             {
@@ -152,10 +153,10 @@ internal static class Program
             }
         }
 
-        RealizeSentence(sentences, current);
+        RealizeSentence(writer, sentences, current);
     }
 
-    private static void RealizeSentence(List<List<string>> sentences, List<string> current)
+    private static void RealizeSentence(StreamWriter writer, List<List<string>> sentences, List<string> current)
     {
         if (current.Count == 0)
         {
@@ -164,11 +165,10 @@ internal static class Program
 
         foreach ((string tag, string word) in TagSentence(current).Zip(current))
         {
-            Console.WriteLine("{0}\t{1}", word, tag);
+            writer.WriteLine("{0}\t{1}", word, tag);
         }
 
-        Console.WriteLine();
-
+        writer.WriteLine();
         current.Clear();
     }
 
@@ -210,8 +210,8 @@ internal static class Program
             }
         }
 
-        double[,] viterbi = new double[n + 2, t];
-        int[,] backpointer = new int[n + 2, t];
+        double[,] viterbi = new double[n + 1, t];
+        int[,] backpointer = new int[n + 1, t];
 
         for (int i = 1; i <= n; i++)
         {
@@ -239,32 +239,29 @@ internal static class Program
             }
         }
 
-        viterbi[f, t - 1] = viterbi[1, t - 1] * a[1, f];
-        backpointer[f, t - 1] = 1;
+        double maxViterbi = viterbi[1, t - 1] * a[1, f];
+        int argMaxBackpointer = 1;
 
         for (int i = 2; i <= n; i++)
         {
             double next = viterbi[i, t - 1] * a[i, f];
 
-            if (next > viterbi[f, t - 1])
+            if (next > maxViterbi)
             {
-                viterbi[f, t - 1] = next;
-                backpointer[f, t - 1] = i;
+                maxViterbi = next;
+                argMaxBackpointer = i;
             }
         }
 
         int[] results = new int[t];
 
-        results[t - 1] = backpointer[f, t - 1];
+        results[t - 1] = argMaxBackpointer;
 
         for (int u = t - 2; u >= 0; u--)
         {
             results[u] = backpointer[results[u + 1], u + 1];
         }
 
-        foreach (int i in results)
-        {
-            yield return q[i];
-        }
+        return results.Select(i => q[i]);
     }
 }
