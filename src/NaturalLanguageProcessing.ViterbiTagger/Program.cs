@@ -18,8 +18,10 @@ internal static class Program
 {
     private const string SentenceStart = "Begin_Sent";
     private const string SentenceEnd = "End_Sent";
+    private const string UnknownWord = "Unknown_Word";
     private const int SmoothingK = 1;
 
+    private static readonly HashSet<string> words = new HashSet<string>();
     private static readonly Dictionary<string, int> tags = new Dictionary<string, int>()
     {
         { SentenceStart, 0 },
@@ -77,14 +79,13 @@ internal static class Program
             if (word != null)
             {
                 key = (tag, word);
-
                 likelihood[key] = likelihood.GetValueOrDefault(key) + 1;
+
+                words.Add(word);
             }
 
             tags[tag] = tags.GetValueOrDefault(tag) + 1;
-
             key = (previousTag, tag);
-
             transition[key] = transition.GetValueOrDefault(key) + 1;
 
             if (tag == SentenceEnd)
@@ -95,6 +96,18 @@ internal static class Program
             {
                 previousTag = tag;
             }
+        }
+
+        foreach ((string Tag, string Word) key in likelihood
+            .Where(x => x.Value == 1)
+            .Select(x => x.Key)
+            .ToList())
+        {
+            likelihood.Remove(key);
+
+            (string Tag, string Word) newKey = (key.Tag, UnknownWord);
+
+            likelihood[newKey] = likelihood.GetValueOrDefault(newKey) + 1;
         }
     }
 
@@ -191,7 +204,14 @@ internal static class Program
         {
             for (int u = 0; u < t; u++)
             {
-                (string Tag, string Word) key = (q[i], sentence[u].ToUpperInvariant());
+                string word = sentence[u].ToUpperInvariant();
+
+                if (!words.Contains(word))
+                {
+                    word = UnknownWord;
+                }
+
+                (string Tag, string Word) key = (q[i], word);
 
                 if (likelihood.TryGetValue(key, out int count))
                 {
