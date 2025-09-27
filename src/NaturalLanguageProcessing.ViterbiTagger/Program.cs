@@ -10,7 +10,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 
 namespace NaturalLanguageProcessing.ViterbiTagger;
 
@@ -18,19 +17,15 @@ internal static class Program
 {
     private const string SentenceStart = "Begin_Sent";
     private const string SentenceEnd = "End_Sent";
-    private const string UnknownWord = "Unknown_Word";
-    private const int SmoothingK = 1;
 
-    private static readonly HashSet<string> words = new HashSet<string>();
-    private static readonly Dictionary<string, int> tags = new Dictionary<string, int>()
-    {
-        { SentenceStart, 0 },
-        { SentenceEnd, 0 }
-    };
-    private static readonly Dictionary<(string Tag, string Word), int> likelihood =
-        new Dictionary<(string Tag, string Word), int>();
-    private static readonly Dictionary<(string Source, string Target), int> transition =
-        new Dictionary<(string Source, string Target), int>();
+    private static readonly HashSet<string> words =
+        new HashSet<string>();
+    private static readonly Dictionary<string, int> tags =
+        new Dictionary<string, int>();
+    private static readonly Dictionary<(string Word, string Tag), double> likelihood =
+        new Dictionary<(string Word, string Tag), double>();
+    private static readonly Dictionary<(string Source, string Target), double> transition =
+        new Dictionary<(string Source, string Target), double>();
 
     private static void Main(string[] args)
     {
@@ -46,8 +41,13 @@ internal static class Program
 
         CheckFile(posFileName);
         CheckFile(wordsFileName);
+
+        Stopwatch watch = Stopwatch.StartNew();
+
         ReadPosFile(posFileName);
         TagFile(wordsFileName);
+        watch.Stop();
+        Console.WriteLine("{0:n0} ms elapsed.", watch.ElapsedMilliseconds);
     }
 
     private static void CheckFile(string fileName)
@@ -64,65 +64,63 @@ internal static class Program
         using StreamReader reader = File.OpenText(fileName);
 
         string? line;
-        string previousTag = SentenceStart;
+        string previous = SentenceStart;
 
         while ((line = reader.ReadLine()) != null)
         {
-            if (previousTag == SentenceStart)
+            line = line.Trim();
+
+            if (previous == SentenceStart)
             {
-                tags[SentenceStart]++;
+                tags[SentenceStart] = tags.GetValueOrDefault(SentenceStart) + 1;
             }
 
-            (string tag, string? word) = ParseLine(line);
-            (string, string) key;
+            string? word;
+            string tag;
 
-            if (word != null)
+            if (string.IsNullOrWhiteSpace(line))
             {
-                key = (tag, word);
-                likelihood[key] = likelihood.GetValueOrDefault(key) + 1;
-
-                words.Add(word);
-            }
-
-            tags[tag] = tags.GetValueOrDefault(tag) + 1;
-            key = (previousTag, tag);
-            transition[key] = transition.GetValueOrDefault(key) + 1;
-
-            if (tag == SentenceEnd)
-            {
-                previousTag = SentenceStart;
+                word = null;
+                tag = SentenceEnd;
             }
             else
             {
-                previousTag = tag;
+                string[] segments = line.Split(
+                    new string[] { "\t", " " },
+                    StringSplitOptions.TrimEntries);
+
+                word = segments[0].ToUpperInvariant();
+                tag = segments[1].ToUpperInvariant();
+            }
+
+            tags[tag] = tags.GetValueOrDefault(tag) + 1;
+            transition[(previous, tag)] = transition.GetValueOrDefault((previous, tag)) + 1;
+
+            if (word != null)
+            {
+                words.Add(word);
+                likelihood[(word, tag)] = likelihood.GetValueOrDefault((word, tag)) + 1;
+            }
+
+            if (tag == SentenceEnd)
+            {
+                previous = SentenceStart;
+            }
+            else
+            {
+                previous = tag;
             }
         }
 
-        foreach ((string Tag, string Word) key in likelihood
-            .Where(x => x.Value == 1)
-            .Select(x => x.Key)
-            .ToList())
+        foreach (KeyValuePair<(string Source, string Target), double> entry in transition)
         {
-            likelihood.Remove(key);
-
-            (string Tag, string Word) newKey = (key.Tag, UnknownWord);
-
-            likelihood[newKey] = likelihood.GetValueOrDefault(newKey) + 1;
-        }
-    }
-
-    private static (string tag, string? word) ParseLine(string? line)
-    {
-        if (string.IsNullOrWhiteSpace(line))
-        {
-            return (SentenceEnd, null);
+            transition[entry.Key] = entry.Value / tags[entry.Key.Source];
         }
 
-        string[] segments = line.Split();
-        string word = segments[0].ToUpperInvariant();
-        string tag = segments[1].ToUpperInvariant();
-
-        return (tag, word);
+        foreach (KeyValuePair<(string Word, string Tag), double> entry in likelihood)
+        {
+            likelihood[entry.Key] = entry.Value / tags[entry.Key.Tag];
+        }
     }
 
     private static void TagFile(string fileName)
@@ -130,152 +128,145 @@ internal static class Program
         using StreamReader reader = File.OpenText(fileName);
         using StreamWriter writer = File.CreateText("submission.pos");
 
+        List<string> sentence = new List<string>();
         string? line;
-        List<string> current = new List<string>();
-        List<List<string>> sentences = new List<List<string>>();
 
         while ((line = reader.ReadLine()) != null)
         {
+            line = line.Trim();
+
             if (string.IsNullOrWhiteSpace(line))
             {
-                RealizeSentence(writer, sentences, current);
+                RealizeSentence(writer, sentence);
             }
             else
             {
-                current.Add(line);
+                sentence.Add(line);
             }
         }
 
-        RealizeSentence(writer, sentences, current);
+        RealizeSentence(writer, sentence);
     }
 
-    private static void RealizeSentence(StreamWriter writer, List<List<string>> sentences, List<string> current)
+    private static void RealizeSentence(StreamWriter writer, List<string> sentence)
     {
-        if (current.Count == 0)
+        if (sentence.Count == 0)
         {
             return;
         }
 
-        foreach ((string tag, string word) in TagSentence(current).Zip(current))
+        string[] tags = TagSentence(sentence);
+
+        for (int i = 0; i < sentence.Count; i++)
         {
-            writer.WriteLine("{0}\t{1}", word, tag);
+            writer.WriteLine("{0}\t{1}", sentence[i], tags[i]);
         }
 
         writer.WriteLine();
-        current.Clear();
+        sentence.Clear();
     }
 
-    private static IEnumerable<string> TagSentence(List<string> sentence)
+    private static string[] TagSentence(List<string> sentence)
     {
-        int sentenceStart = tags[SentenceStart];
-        int sentenceEnd = tags[SentenceEnd];
+        string[] states = new string[tags.Count];
 
-        tags.Remove(SentenceStart);
-        tags.Remove(SentenceEnd);
+        states[0] = SentenceStart;
 
-        int n = tags.Count;
-        int f = n + 1;
-        string[] q = new string[n + 2];
+        int j = 1;
 
-        q[0] = SentenceStart;
-
-        tags.Keys.CopyTo(q, index: 1);
-
-        tags[SentenceStart] = sentenceStart;
-        tags[SentenceEnd] = sentenceEnd;
-        q[f] = SentenceEnd;
-
-        double[,] a = new double[n + 2, n + 2];
-
-        for (int i = 0; i < f; i++)
+        foreach (string tag in tags.Keys)
         {
-            for (int j = 0; j < f; j++)
+            if (tag != SentenceStart && tag != SentenceEnd)
             {
-                string source = q[i];
-
-                a[i, j] = (double)transition.GetValueOrDefault((source, q[j])) / tags[source];
+                states[j] = tag;
+                j++;
             }
         }
 
-        int t = sentence.Count;
-        double[,] b = new double[n + 1, t];
+        states[states.Length - 1] = SentenceEnd;
 
-        for (int i = 0; i <= n; i++)
+        double[,] viterbi = new double[sentence.Count + 1, tags.Count];
+
+        viterbi[0, 0] = 1;
+
+        int[,] backpointer = new int[sentence.Count + 1, tags.Count];
+
+        int argMax;
+        double max;
+
+        for (int t = 1; t <= sentence.Count; t++)
         {
-            for (int u = 0; u < t; u++)
+            string word = sentence[t - 1].ToUpperInvariant();
+
+            for (int q = 0; q < states.Length; q++)
             {
-                string word = sentence[u].ToUpperInvariant();
+                argMax = -1;
+                max = -1;
 
-                if (!words.Contains(word))
+                for (int p = 0; p < states.Length; p++)
                 {
-                    word = UnknownWord;
-                }
+                    double emission;
 
-                (string Tag, string Word) key = (q[i], word);
-
-                if (likelihood.TryGetValue(key, out int count))
-                {
-                    b[i, u] = (double)(count + SmoothingK) / (tags[key.Tag] + SmoothingK);
-                }
-                else
-                {
-                    b[i, u] = 0.001;
-                }
-            }
-        }
-
-        double[,] viterbi = new double[n + 1, t];
-        int[,] backpointer = new int[n + 1, t];
-
-        for (int i = 1; i <= n; i++)
-        {
-            viterbi[i, 0] = a[0, i] * b[i, 0];
-            backpointer[i, 0] = 0;
-        }
-
-        for (int u = 1; u < t; u++)
-        {
-            for (int i = 1; i <= n; i++)
-            {
-                viterbi[i, u] = viterbi[1, u - 1] * a[1, i] * b[i, u];
-                backpointer[i, u] = 1;
-
-                for (int j = 2; j <= n; j++)
-                {
-                    double next = viterbi[j, u - 1] * a[j, i] * b[i, u];
-
-                    if (next > viterbi[i, u])
+                    if (words.Contains(word))
                     {
-                        viterbi[i, u] = next;
-                        backpointer[i, u] = j;
+                        emission = likelihood.GetValueOrDefault((word, states[q]));
+                    }
+                    else
+                    {
+                        emission = 1d / 1000;
+                    }
+
+                    double current =
+                        viterbi[t - 1, p]
+                        * transition.GetValueOrDefault((states[p], states[q]))
+                        * emission;
+
+                    if (current > max)
+                    {
+                        argMax = p;
+                        max = current;
                     }
                 }
+
+                if (argMax != -1)
+                {
+                    viterbi[t, q] = max;
+                    backpointer[t, q] = argMax;
+                }
             }
         }
 
-        double maxViterbi = viterbi[1, t - 1] * a[1, f];
-        int argMaxBackpointer = 1;
+        argMax = -1;
+        max = -1;
 
-        for (int i = 2; i <= n; i++)
+        for (int p = 0; p < states.Length; p++)
         {
-            double next = viterbi[i, t - 1] * a[i, f];
+            double current =
+                transition.GetValueOrDefault((states[p], SentenceEnd))
+                * viterbi[sentence.Count, p];
 
-            if (next > maxViterbi)
+            if (current > max)
             {
-                maxViterbi = next;
-                argMaxBackpointer = i;
+                argMax = p;
+                max = current;
             }
         }
 
-        int[] results = new int[t];
-
-        results[t - 1] = argMaxBackpointer;
-
-        for (int u = t - 2; u >= 0; u--)
+        if (argMax == -1)
         {
-            results[u] = backpointer[results[u + 1], u + 1];
+            return Array.Empty<string>();
         }
 
-        return results.Select(i => q[i]);
+        string[] results = new string[sentence.Count];
+
+        results[results.Length - 1] = states[argMax];
+
+        for (int i = backpointer.GetLength(0) - 1; i > 1; i--)
+        {
+            argMax = backpointer[i, argMax];
+            results[i - 2] = states[argMax];
+        }
+
+        return results;
     }
 }
