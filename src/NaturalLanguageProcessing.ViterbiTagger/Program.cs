@@ -11,8 +11,19 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace NaturalLanguageProcessing.ViterbiTagger;
+
+[Flags]
+internal enum Kinds
+{
+    None = 0,
+    Upper = 1,
+    Lower = 2,
+    Hyphenated = 4,
+    Numeral = 8
+};
 
 internal static class Program
 {
@@ -28,12 +39,39 @@ internal static class Program
         new Dictionary<(string Word, string Tag), double>();
     private static readonly Dictionary<(string Source, string Target), double> transition =
         new Dictionary<(string Source, string Target), double>();
+    private static readonly HashSet<string> suffixes = new HashSet<string>()
+    {
+        "a", "aria", "ariums", "ases", "ations", "cocci", "esses", "hedra",
+        "hedrons", "ials", "iases", "itides", "itises", "logs", "logues",
+        "men", "niki", "nikim", "niks", "oes", "omas", "omata", "oria",
+        "oriums", "oses", "people", "persons", "physes", "pytes", "poleis",
+        "polises", "sauri", "sauruses", "ses", "trices", "trixes", "women",
+        "able", "acal", "acious", "adelic", "adic", "al", "an", "ant",
+        "cidal", "ed", "en", "ent", "etic", "ful", "genic", "i", "ial", "ian",
+        "ic", "ical", "ious", "ish", "ist", "itious", "like", "ly", "old",
+        "otic", "ous", "phagic", "pilled",  "th", "y", "ably", "ally", "ibly",
+        "ling", "ly", "s", "hood", "abad", "ability", "aboo", "ac", "acity",
+        "acy", "ade", "age", "aholic",  "ance", "ase",
+        "ation", "ator", "boo", "ception","cism", "con", "crypt", "dom", "el",
+        "ence", "enchyma", "'er", "er", "erization", "ery", "ess",
+        "ette", "ety", "faction", "geddon", "gonium", "gyny", "hon", "i",
+        "ial", "ian", "iasis", "ie", "ification", "ifier", "ign", "ing", "ion",
+        "isation", "ism", "ist", "itis", "itude", "ity", "ization", "ling",
+        "lord", "mageddon", "ment", "n", "nado", "ness", "nik", "off",
+        "oholic", "oid", "or", "osis", "physis", "phyte", "pocalypse", "poo",
+        "poon", "rise", "ry", "set", "ship", "sies", "sis", "speak", "stan",
+        "tacism", "th", "tion", "Tuber", "ty", "ure", "y", "en",
+        "erize", "esce", "fy", "ify", "ise", "ize", "mander", "maxx", "se"
+    };
+    private static int maxSuffixLength;
 
     private static void Main(string[] args)
     {
         if (args.Length < 2)
         {
-            Console.WriteLine("Usage: {0} <pos_file> <words_file>", Process.GetCurrentProcess().ProcessName);
+            Console.WriteLine(
+                "Usage: {0} <pos_file> <words_file>",
+                Process.GetCurrentProcess().ProcessName);
 
             return;
         }
@@ -43,6 +81,8 @@ internal static class Program
 
         CheckFile(posFileName);
         CheckFile(wordsFileName);
+
+        maxSuffixLength = suffixes.Max(x => x.Length);
 
         Stopwatch watch = Stopwatch.StartNew();
 
@@ -74,7 +114,8 @@ internal static class Program
 
             if (previous == SentenceStart)
             {
-                tags[SentenceStart] = tags.GetValueOrDefault(SentenceStart) + 1;
+                tags[SentenceStart] =
+                    tags.GetValueOrDefault(SentenceStart) + 1;
             }
 
             string? word;
@@ -102,12 +143,14 @@ internal static class Program
             }
 
             tags[tag] = tags.GetValueOrDefault(tag) + 1;
-            transition[(previous, tag)] = transition.GetValueOrDefault((previous, tag)) + 1;
+            transition[(previous, tag)] =
+                transition.GetValueOrDefault((previous, tag)) + 1;
 
             if (word != null)
             {
                 words[word] = words.GetValueOrDefault(word) + 1;
-                likelihood[(word, tag)] = likelihood.GetValueOrDefault((word, tag)) + 1;
+                likelihood[(word, tag)] =
+                    likelihood.GetValueOrDefault((word, tag)) + 1;
             }
 
             if (tag == SentenceEnd)
@@ -146,45 +189,65 @@ internal static class Program
 
         foreach (KeyValuePair<(string Source, string Target), double> entry in transition)
         {
-            transition[entry.Key] = (entry.Value + SmoothingK) / (tags[entry.Key.Source] + SmoothingK);
+            transition[entry.Key] =
+                (entry.Value + SmoothingK) / (tags[entry.Key.Source] + SmoothingK);
         }
 
         foreach (KeyValuePair<(string Word, string Tag), double> entry in likelihood)
         {
-            likelihood[entry.Key] = (entry.Value + SmoothingK) / (tags[entry.Key.Tag] + SmoothingK);
+            likelihood[entry.Key] =
+                (entry.Value + SmoothingK) / (tags[entry.Key.Tag] + SmoothingK);
         }
     }
 
     private static string TagUnknown(string word)
     {
-        bool hyphenated = false;
+        Kinds kinds = Kinds.None;
 
         foreach (char symbol in word)
         {
             if (char.IsUpper(symbol))
             {
-                return "Unknown_Word_Capitalized";
+                kinds |= Kinds.Upper;
+            }
+
+            if (char.IsLower(symbol))
+            {
+                kinds |= Kinds.Lower;
             }
 
             if (char.IsDigit(symbol))
             {
-                return "Unknown_Word_Numeral";
+                kinds |= Kinds.Numeral;
             }
 
             switch (symbol)
             {
                 case '-':
-                    hyphenated = true;
+                    kinds |= Kinds.Hyphenated;
                     break;
             }
         }
 
-        if (hyphenated)
+        return string.Format(
+            "Unknown_Word[{0},{1}]", 
+            (int)kinds, 
+            GetSuffix(word) ?? string.Empty);
+    }
+
+    private static string? GetSuffix(string word)
+    {
+        for (int i = Math.Min(maxSuffixLength, word.Length); i >= 1; i--)
         {
-            return "Unknown_Word_Hyphenated";
+            string suffix = word.Substring(word.Length - i, i);
+
+            if (suffixes.Contains(suffix))
+            {
+                return suffix;
+            }
         }
 
-        return "Unknown_Word";
+        return null;
     }
 
     private static void TagFile(string fileName)
@@ -212,7 +275,9 @@ internal static class Program
         RealizeSentence(writer, sentence);
     }
 
-    private static void RealizeSentence(StreamWriter writer, List<string> sentence)
+    private static void RealizeSentence(
+        StreamWriter writer,
+        List<string> sentence)
     {
         if (sentence.Count == 0)
         {
