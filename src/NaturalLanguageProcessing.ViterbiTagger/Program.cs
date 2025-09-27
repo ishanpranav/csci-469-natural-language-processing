@@ -20,7 +20,7 @@ internal static class Program
     private const string SentenceEnd = "End_Sent";
     //private const string UnknownWord = "Unknown_Word";
     private const int SmoothingK = 1;
-
+    private const int UnknownK = 1;
     private static readonly Dictionary<string, int> words =
         new Dictionary<string, int>();
     private static readonly Dictionary<string, int> tags =
@@ -116,7 +116,7 @@ internal static class Program
         }
 
         foreach (string word in words
-            .Where(x => x.Value == 1)
+            .Where(x => x.Value <= UnknownK)
             .Select(x => x.Key)
             .ToList())
         {
