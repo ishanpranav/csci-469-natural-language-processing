@@ -167,16 +167,16 @@ internal static class Program
             }
         }
 
-        foreach (KeyValuePair<(string Source, string Target), double> entry in transition)
-        {
-            transition[entry.Key] =
-                (entry.Value + SmoothingK) / (tags[entry.Key.Source] + (SmoothingK * tags.Count));
-        }
-
         foreach (KeyValuePair<(string Word, string Tag), double> entry in likelihood)
         {
             likelihood[entry.Key] =
                 (entry.Value + SmoothingK) / (tags[entry.Key.Tag] + (SmoothingK * words.Count));
+        }
+
+        foreach (KeyValuePair<(string Source, string Target), double> entry in transition)
+        {
+            transition[entry.Key] =
+                (entry.Value + SmoothingK) / (tags[entry.Key.Source] + (SmoothingK * tags.Count));
         }
     }
 
@@ -184,14 +184,16 @@ internal static class Program
     {
         Kinds kinds = Kinds.None;
 
-        foreach (char symbol in word)
+        for (int i = 0; i < word.Length; i++)
         {
+            char symbol = word[i];
+
             if (char.IsUpper(symbol))
             {
                 kinds |= Kinds.Upper;
             }
 
-            if (char.IsLower(symbol))
+            if (i > 0 && char.IsLower(symbol))
             {
                 kinds |= Kinds.Lower;
             }
