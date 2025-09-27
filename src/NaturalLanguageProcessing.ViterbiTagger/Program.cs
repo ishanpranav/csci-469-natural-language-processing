@@ -18,7 +18,6 @@ internal static class Program
 {
     private const string SentenceStart = "Begin_Sent";
     private const string SentenceEnd = "End_Sent";
-    //private const string UnknownWord = "Unknown_Word";
     private const int SmoothingK = 1;
     private const int UnknownK = 1;
     private static readonly Dictionary<string, int> words =
@@ -92,7 +91,13 @@ internal static class Program
                     new string[] { "\t", " " },
                     StringSplitOptions.TrimEntries);
 
-                word = segments[0].ToUpperInvariant();
+                word = segments[0];
+
+                if (previous == SentenceStart)
+                {
+                    word = char.ToLower(word[0]) + word.Substring(1);
+                }
+
                 tag = segments[1].ToUpperInvariant();
             }
 
@@ -152,6 +157,28 @@ internal static class Program
 
     private static string TagUnknown(string word)
     {
+        bool hyphenated = false;
+
+        foreach (char symbol in word)
+        {
+            if (char.IsDigit(symbol))
+            {
+                return "Unknown_Word_Numeral";
+            }
+
+            switch (symbol)
+            {
+                case '-':
+                    hyphenated = true;
+                    break;
+            }
+        }
+
+        if (hyphenated)
+        {
+            return "Unknown_Word_Hyphenated";
+        }
+
         return "Unknown_Word";
     }
 
@@ -227,7 +254,7 @@ internal static class Program
 
         for (int t = 1; t <= sentence.Count; t++)
         {
-            string word = sentence[t - 1].ToUpperInvariant();
+            string word = sentence[t - 1];
 
             for (int q = 0; q < states.Length; q++)
             {
