@@ -18,7 +18,7 @@ internal static class Program
 {
     private const string SentenceStart = "Begin_Sent";
     private const string SentenceEnd = "End_Sent";
-    private const string UnknownWord = "Unknown_Word";
+    //private const string UnknownWord = "Unknown_Word";
     private const int SmoothingK = 1;
 
     private static readonly Dictionary<string, int> words =
@@ -122,7 +122,9 @@ internal static class Program
         {
             words.Remove(word);
 
-            words[UnknownWord] = words.GetValueOrDefault(UnknownWord) + 1;
+            string guess = TagUnknown(word);
+
+            words[guess] = words.GetValueOrDefault(guess) + 1;
 
             foreach (string tag in tags.Keys)
             {
@@ -130,8 +132,8 @@ internal static class Program
                 {
                     likelihood.Remove((word, tag));
 
-                    likelihood[(UnknownWord, tag)] =
-                        likelihood.GetValueOrDefault((UnknownWord, tag))
+                    likelihood[(guess, tag)] =
+                        likelihood.GetValueOrDefault((guess, tag))
                         + prior;
                 }
             }
@@ -146,6 +148,11 @@ internal static class Program
         {
             likelihood[entry.Key] = (entry.Value + SmoothingK) / (tags[entry.Key.Tag] + SmoothingK);
         }
+    }
+
+    private static string TagUnknown(string word)
+    {
+        return "Unknown_Word";
     }
 
     private static void TagFile(string fileName)
@@ -290,9 +297,11 @@ internal static class Program
             return likelihood.GetValueOrDefault((word, tag));
         }
 
-        if (words.ContainsKey(UnknownWord))
+        string guess = TagUnknown(word);
+
+        if (words.ContainsKey(guess))
         {
-            return likelihood.GetValueOrDefault((UnknownWord, tag));
+            return likelihood.GetValueOrDefault((guess, tag));
         }
 
         return 1d / 1000;
