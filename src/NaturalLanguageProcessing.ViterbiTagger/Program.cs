@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 
 namespace NaturalLanguageProcessing.ViterbiTagger;
 
@@ -17,9 +18,11 @@ internal static class Program
 {
     private const string SentenceStart = "Begin_Sent";
     private const string SentenceEnd = "End_Sent";
+    private const string UnknownWord = "Unknown_Word";
+    private const int SmoothingK = 1;
 
-    private static readonly HashSet<string> words =
-        new HashSet<string>();
+    private static readonly Dictionary<string, int> words =
+        new Dictionary<string, int>();
     private static readonly Dictionary<string, int> tags =
         new Dictionary<string, int>();
     private static readonly Dictionary<(string Word, string Tag), double> likelihood =
@@ -98,7 +101,7 @@ internal static class Program
 
             if (word != null)
             {
-                words.Add(word);
+                words[word] = words.GetValueOrDefault(word) + 1;
                 likelihood[(word, tag)] = likelihood.GetValueOrDefault((word, tag)) + 1;
             }
 
@@ -112,14 +115,36 @@ internal static class Program
             }
         }
 
+        foreach (string word in words
+            .Where(x => x.Value == 1)
+            .Select(x => x.Key)
+            .ToList())
+        {
+            words.Remove(word);
+
+            words[UnknownWord] = words.GetValueOrDefault(UnknownWord) + 1;
+
+            foreach (string tag in tags.Keys)
+            {
+                if (likelihood.TryGetValue((word, tag), out double prior))
+                {
+                    likelihood.Remove((word, tag));
+
+                    likelihood[(UnknownWord, tag)] =
+                        likelihood.GetValueOrDefault((UnknownWord, tag))
+                        + prior;
+                }
+            }
+        }
+
         foreach (KeyValuePair<(string Source, string Target), double> entry in transition)
         {
-            transition[entry.Key] = entry.Value / tags[entry.Key.Source];
+            transition[entry.Key] = (entry.Value + SmoothingK) / (tags[entry.Key.Source] + SmoothingK);
         }
 
         foreach (KeyValuePair<(string Word, string Tag), double> entry in likelihood)
         {
-            likelihood[entry.Key] = entry.Value / tags[entry.Key.Tag];
+            likelihood[entry.Key] = (entry.Value + SmoothingK) / (tags[entry.Key.Tag] + SmoothingK);
         }
     }
 
@@ -190,7 +215,6 @@ internal static class Program
         viterbi[0, 0] = 1;
 
         int[,] backpointer = new int[sentence.Count + 1, tags.Count];
-
         int argMax;
         double max;
 
@@ -205,21 +229,10 @@ internal static class Program
 
                 for (int p = 0; p < states.Length; p++)
                 {
-                    double emission;
-
-                    if (words.Contains(word))
-                    {
-                        emission = likelihood.GetValueOrDefault((word, states[q]));
-                    }
-                    else
-                    {
-                        emission = 1d / 1000;
-                    }
-
                     double current =
                         viterbi[t - 1, p]
                         * transition.GetValueOrDefault((states[p], states[q]))
-                        * emission;
+                        * GetLikelihood(word, states[q]);
 
                     if (current > max)
                     {
@@ -268,5 +281,20 @@ internal static class Program
         }
 
         return results;
+    }
+
+    private static double GetLikelihood(string word, string tag)
+    {
+        if (words.ContainsKey(word))
+        {
+            return likelihood.GetValueOrDefault((word, tag));
+        }
+
+        if (words.ContainsKey(UnknownWord))
+        {
+            return likelihood.GetValueOrDefault((UnknownWord, tag));
+        }
+
+        return 1d / 1000;
     }
 }
