@@ -12,7 +12,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace NaturalLanguageProcessing.ViterbiTagger;
 
@@ -171,13 +170,13 @@ internal static class Program
         foreach (KeyValuePair<(string Source, string Target), double> entry in transition)
         {
             transition[entry.Key] =
-                (entry.Value + SmoothingK) / (tags[entry.Key.Source] + SmoothingK);
+                (entry.Value + SmoothingK) / (tags[entry.Key.Source] + (SmoothingK * tags.Count));
         }
 
         foreach (KeyValuePair<(string Word, string Tag), double> entry in likelihood)
         {
             likelihood[entry.Key] =
-                (entry.Value + SmoothingK) / (tags[entry.Key.Tag] + SmoothingK);
+                (entry.Value + SmoothingK) / (tags[entry.Key.Tag] + (SmoothingK * words.Count));
         }
     }
 

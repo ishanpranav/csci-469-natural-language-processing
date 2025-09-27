@@ -8,10 +8,22 @@ distributed under the MIT license.
 
 ```sh
 cat WSJ_02-21.pos WSJ_24.pos > pos_file.pos
-cat WSJ_23.words WSJ_24.words > words_file.words
+cat WSJ_23.words > words_file.words
 ./NaturalLanguageProcessing.ViterbiTagger pos_file.pos words_file.words > submission.pos
 ```
 
+## Implementation
+
+I develoepd this program in five stages:
+
+1. parsing and summarizing the training data;
+2. implementing and testing Viterbi's algorithm;
+3. introducing smoothing and handling out-of-vocabulary words;
+4. classifying unknown words by shape; and
+5. classifying unknown words by suffix.
+
+### Stage 1
+
 ## License
 
-This repository is licensed with the [MIT](LICENSE.txt) license.
+This project is licensed with the [MIT](LICENSE.txt) license.
