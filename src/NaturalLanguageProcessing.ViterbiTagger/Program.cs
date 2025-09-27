@@ -5,6 +5,7 @@
 // References:
 //  - https://en.wikipedia.org/wiki/Viterbi_algorithm#Pseudocode
 //  - https://medium.com/data-science-in-your-pocket/pos-tagging-using-hidden-markov-models-hmm-viterbi-algorithm-in-nlp-mathematics-explained-d43ca89347c4
+//  - https://en.wiktionary.org/wiki/Appendix:English_suffixes
 
 using System;
 using System.Collections.Generic;
@@ -41,27 +42,7 @@ internal static class Program
         new Dictionary<(string Source, string Target), double>();
     private static readonly HashSet<string> suffixes = new HashSet<string>()
     {
-        "a", "aria", "ariums", "ases", "ations", "cocci", "esses", "hedra",
-        "hedrons", "ials", "iases", "itides", "itises", "logs", "logues",
-        "men", "niki", "nikim", "niks", "oes", "omas", "omata", "oria",
-        "oriums", "oses", "people", "persons", "physes", "pytes", "poleis",
-        "polises", "sauri", "sauruses", "ses", "trices", "trixes", "women",
-        "able", "acal", "acious", "adelic", "adic", "al", "an", "ant",
-        "cidal", "ed", "en", "ent", "etic", "ful", "genic", "i", "ial", "ian",
-        "ic", "ical", "ious", "ish", "ist", "itious", "like", "ly", "old",
-        "otic", "ous", "phagic", "pilled",  "th", "y", "ably", "ally", "ibly",
-        "ling", "ly", "s", "hood", "abad", "ability", "aboo", "ac", "acity",
-        "acy", "ade", "age", "aholic",  "ance", "ase",
-        "ation", "ator", "boo", "ception","cism", "con", "crypt", "dom", "el",
-        "ence", "enchyma", "'er", "er", "erization", "ery", "ess",
-        "ette", "ety", "faction", "geddon", "gonium", "gyny", "hon", "i",
-        "ial", "ian", "iasis", "ie", "ification", "ifier", "ign", "ing", "ion",
-        "isation", "ism", "ist", "itis", "itude", "ity", "ization", "ling",
-        "lord", "mageddon", "ment", "n", "nado", "ness", "nik", "off",
-        "oholic", "oid", "or", "osis", "physis", "phyte", "pocalypse", "poo",
-        "poon", "rise", "ry", "set", "ship", "sies", "sis", "speak", "stan",
-        "tacism", "th", "tion", "Tuber", "ty", "ure", "y", "en",
-        "erize", "esce", "fy", "ify", "ise", "ize", "mander", "maxx", "se"
+        "a", "ability", "able", "ably", "ac", "acean", "aceous", "ad", "ade", "aemia", "age", "agog", "agogue", "aholic", "al", "algia", "amine", "an", "ana", "ance", "ancy", "androus", "andry", "ane", "ant", "ar", "arch", "archy", "ard", "arian", "arium", "art", "ary", "ase", "ate", "athon", "ation", "ative", "ator", "atory", "biont", "biosis", "blast", "bot", "cade", "caine", "carp", "carpic", "carpous", "cele", "cene", "centric", "cephalic", "cephalous", "cephaly", "chore", "chory", "chrome", "cide", "clast", "clinal", "cline", "clinic", "coccus", "coel", "coele", "colous", "cracy", "crat", "cratic", "cratical", "cy", "cyte", "dale", "derm", "derma", "dermatous", "dom", "drome", "dromous", "ean", "eaux", "ectomy", "ed", "ee", "eer", "ein", "eme", "emia", "en", "ence", "enchyma", "ency", "ene", "ent", "eous", "er", "ergic", "ergy", "es", "escence", "escent", "ese", "esque", "ess", "est", "et", "eth", "etic", "ette", "ey", "facient", "faction", "fer", "ferous", "fic", "fication", "fid", "florous", "fold", "foliate", "foliolate", "form", "fuge", "ful", "fy", "gamous", "gamy", "gate", "gen", "gene", "genesis", "genetic", "genic", "genous", "geny", "gnathous", "gon", "gony", "gram", "graph", "grapher", "graphy", "gyne", "gynous", "gyny", "hood", "ia", "ial", "ian", "iana", "iasis", "iatric", "iatrics", "iatry", "ibility", "ible", "ic", "icide", "ician", "ics", "id", "ide", "ie", "ify", "ile", "in", "ine", "ing", "ion", "ious", "isation", "ise", "ish", "ism", "ist", "istic", "istical", "istically", "ite", "itious", "itis", "ity", "ium", "ive", "iver", "ix", "ization", "ize", "i", "kin", "kinesis", "kins", "land", "latry", "le", "lepry", "less", "let", "like", "ling", "lite", "lith", "lithic", "log", "logue", "logic", "logical", "logist", "logy", "ly", "lyse", "lysis", "lyte", "lytic", "lyze", "mancy", "mania", "meister", "ment", "mer", "mere", "merous", "meter", "metric", "metrics", "metry", "mire", "mo", "morph", "morphic", "morphism", "morphous", "most", "mycete", "mycin", "nasty", "ness", "nik", "nomy", "nomics", "o", "ode", "odon", "odont", "odontia", "oholic", "oic", "oid", "ol", "ole", "oma", "ome", "omics", "on", "one", "ont", "onym", "onymy", "opia", "opsis", "opsy", "or", "orama", "ory", "ose", "osis", "otic", "otomy", "ous", "o", "para", "parous", "path", "pathy", "ped", "pede", "penia", "petal", "phage", "phagia", "phagous", "phagy", "phane", "phasia", "phil", "phile", "philia", "philiac", "philic", "philous", "phobe", "phobia", "phobic", "phone", "phony", "phore", "phoresis", "phorous", "phrenia", "phyll", "phyllous", "plasia", "plasm", "plast", "plastic", "plasty", "plegia", "plex", "ploid", "pod", "pode", "podous", "poieses", "poietic", "pter", "punk", "rrhagia", "rrhea", "ric", "ry", "'s", "s", "scape", "scope", "scopy", "script", "sect", "sepalous", "ship", "some", "speak", "sperm", "sphere", "sporous", "st", "stasis", "stat", "ster", "stome", "stomy", "taxis", "taxy", "tend", "th", "therm", "thermal", "thermic", "thermy", "thon", "thymia", "tion", "tome", "tomy", "tonia", "trichous", "trix", "tron", "trophic", "trophy", "tropic", "tropism", "tropous", "tropy", "tude", "ture", "ty", "ular", "ule", "ure", "urgy", "uria", "uronic", "urous", "valent", "virile", "vorous", "ward", "wards", "ware", "ways", "wear", "wide", "wise", "worthy", "xor", "y", "yl", "yne", "zilla", "zoic", "zoon", "zygous", "zyme"
     };
     private static int maxSuffixLength;
 
@@ -230,8 +211,8 @@ internal static class Program
         }
 
         return string.Format(
-            "Unknown_Word[{0},{1}]", 
-            (int)kinds, 
+            "Unknown_Word[{0},{1}]",
+            (int)kinds,
             GetSuffix(word) ?? string.Empty);
     }
 

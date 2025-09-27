@@ -2,7 +2,7 @@
   "profiles": {
     "NaturalLanguageProcessing.ViterbiTagger": {
       "commandName": "Project",
-      "commandLineArgs": "\"C:\\Users\\ishan\\source\\Repos\\viterbi-hmm-pos-tagger\\data\\WSJ_02-21.pos\" \"C:\\Users\\ishan\\source\\Repos\\viterbi-hmm-pos-tagger\\data\\WSJ_24.words\""
+      "commandLineArgs": "\"C:\\Users\\ishan\\source\\Repos\\viterbi-hmm-pos-tagger\\data\\training.pos\" \"C:\\Users\\ishan\\source\\Repos\\viterbi-hmm-pos-tagger\\data\\WSJ_24.words\""
     }
   }
 }
