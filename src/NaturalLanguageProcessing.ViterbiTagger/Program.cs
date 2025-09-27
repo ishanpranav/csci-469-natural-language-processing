@@ -161,6 +161,11 @@ internal static class Program
 
         foreach (char symbol in word)
         {
+            if (char.IsUpper(symbol))
+            {
+                return "Unknown_Word_Capitalized";
+            }
+
             if (char.IsDigit(symbol))
             {
                 return "Unknown_Word_Numeral";
