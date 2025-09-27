@@ -98,29 +98,7 @@ internal static class Program
                     tags.GetValueOrDefault(SentenceStart) + 1;
             }
 
-            string? word;
-            string tag;
-
-            if (string.IsNullOrWhiteSpace(line))
-            {
-                word = null;
-                tag = SentenceEnd;
-            }
-            else
-            {
-                string[] segments = line.Split(
-                    new string[] { "\t", " " },
-                    StringSplitOptions.TrimEntries);
-
-                word = segments[0];
-
-                if (previous == SentenceStart)
-                {
-                    word = char.ToLower(word[0]) + word.Substring(1);
-                }
-
-                tag = segments[1].ToUpperInvariant();
-            }
+            (string? word, string tag) = ParseLine(previous, line);
 
             tags[tag] = tags.GetValueOrDefault(tag) + 1;
             transition[(previous, tag)] =
@@ -178,6 +156,26 @@ internal static class Program
             transition[entry.Key] =
                 (entry.Value + SmoothingK) / (tags[entry.Key.Source] + (SmoothingK * tags.Count));
         }
+    }
+
+    private static (string? word, string tag) ParseLine(string previous, string line)
+    {
+        if (string.IsNullOrWhiteSpace(line))
+        {
+            return (null, SentenceEnd);
+        }
+
+        string[] segments = line.Split(
+            new string[] { "\t", " " },
+            StringSplitOptions.TrimEntries);
+        string word = segments[0];
+
+        if (previous == SentenceStart)
+        {
+            word = char.ToLower(word[0]) + word.Substring(1);
+        }
+
+        return (word, segments[1].ToUpperInvariant());
     }
 
     private static string TagUnknown(string word)
