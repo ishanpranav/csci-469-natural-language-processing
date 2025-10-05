@@ -6,31 +6,30 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace NaturalLanguageProcessing.InformationRetrieval;
 
-internal class Article
+internal sealed class Article
 {
     public int Id { get; }
     public string Title { get; }
-    public string Author { get; }
-    public string Metadata { get; }
     public string Summary { get; }
 
-    public Article(int id, string title, string author, string metadata, string summary)
+    public Article(int id, string title, string summary)
     {
         Id = id;
         Title = title;
-        Author = author;
-        Metadata = metadata;
         Summary = summary;
     }
 }
 
-internal static class Program
+internal static partial class Program
 {
-    private static readonly HashSet<string> stopWords = new HashSet<string>()
+    private static readonly string[] delimiters = { " ", "\t", "\r", "\n" };
+    private static readonly HashSet<string> stopWords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
         "a", "the", "an", "and", "or", "but", "about", "above", "after",
         "along", "amid", "among", "as", "at", "by", "for", "from", "in",
@@ -56,6 +55,16 @@ internal static class Program
         "theirs", "you", "your", "yours", "me", "my", "mine", "I", "we", "us",
         "much", "and/or"
     };
+    private static readonly HashSet<string> tokens = new HashSet<string>();
+    private static readonly Dictionary<string, int> df =
+        new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, double> idf =
+        new Dictionary<string, double>();
+
+    [GeneratedRegex(
+        @"[^A-Za-z\s]",
+        RegexOptions.IgnoreCase)]
+    private static partial Regex TokenRegex();
 
     private static void Main(string[] args)
     {
@@ -75,6 +84,26 @@ internal static class Program
         CheckFile(qryFileName);
 
         List<Article> articles = ReadFile(fileName);
+
+        foreach (Article article in articles)
+        {
+            HashSet<string> articleTokens = Tokenize(article.Summary);
+
+            tokens.UnionWith(articleTokens);
+
+            foreach (string token in articleTokens)
+            {
+                df[token] = df.GetValueOrDefault(token) + 1;
+            }
+        }
+
+        double nu = articles.Count + 1;
+
+        foreach (string token in tokens)
+        {
+            idf[token] = Math.Log(nu / (1d  + df.GetValueOrDefault(token))) + 1;
+        }
+
         List<Article> queries = ReadFile(qryFileName);
     }
 
@@ -129,8 +158,6 @@ internal static class Program
                     RealizeArticle(
                         ref id,
                         titleBuilder,
-                        authorBuilder,
-                        metadataBuilder,
                         summaryBuilder,
                         articles);
 
@@ -139,14 +166,6 @@ internal static class Program
 
                 case 'T':
                     titleBuilder.AppendLine(line);
-                    break;
-
-                case 'A':
-                    authorBuilder.AppendLine(line);
-                    break;
-
-                case 'B':
-                    metadataBuilder.AppendLine(line);
                     break;
 
                 case 'W':
@@ -158,8 +177,6 @@ internal static class Program
         RealizeArticle(
             ref id,
             titleBuilder,
-            authorBuilder,
-            metadataBuilder,
             summaryBuilder,
             articles);
 
@@ -170,8 +187,6 @@ internal static class Program
         ref int id,
         StringBuilder titleBuilder,
         StringBuilder authorBuilder,
-        StringBuilder metadataBuilder,
-        StringBuilder summaryBuilder,
         List<Article> articles)
     {
         if (id == 0)
@@ -182,14 +197,19 @@ internal static class Program
         articles.Add(new Article(
             id,
             titleBuilder.ToString(),
-            authorBuilder.ToString(),
-            metadataBuilder.ToString(),
             summaryBuilder.ToString()));
 
         id = 0;
         titleBuilder.Clear();
         authorBuilder.Clear();
-        metadataBuilder.Clear();
-        summaryBuilder.Clear();
+    }
+
+    private static HashSet<string> Tokenize(string value)
+    {
+        return TokenRegex()
+            .Replace(value, " ")
+            .Split(delimiters, StringSplitOptions.RemoveEmptyEntries)
+            .Where(x => !stopWords.Contains(x))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
     }
 }
