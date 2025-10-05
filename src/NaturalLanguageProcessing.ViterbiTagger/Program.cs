@@ -56,8 +56,9 @@ internal static class Program
             return;
         }
 
-        string posFileName = args[0];
-        string wordsFileName = args[1];
+        //string posFileName = args[0];
+        //string wordsFileName = args[1];
+        string posFileName = "";
 
         CheckFile(posFileName);
         CheckFile(wordsFileName);
