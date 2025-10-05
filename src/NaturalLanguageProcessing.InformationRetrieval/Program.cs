@@ -48,6 +48,8 @@ internal static class Program
         CheckFile(qryFileName);
 
         List<Article> articles = ReadFile(fileName);
+        List<Article> queries = ReadFile(qryFileName);
+
     }
 
     private static void CheckFile(string fileName)
@@ -163,10 +165,5 @@ internal static class Program
         authorBuilder.Clear();
         metadataBuilder.Clear();
         summaryBuilder.Clear();
-    }
-
-    private static void ReadQryFile(string fileName)
-    {
-
     }
 }
