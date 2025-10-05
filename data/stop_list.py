@@ -6,7 +6,7 @@ closed_class_stop_words = ['a','the','an','and','or','but','about','above','afte
                            'need','ought','shall','should','will','would','have','had','has','having','be',\
                            'is','am','are','was','were','being','been','get','gets','got','gotten',\
                            'getting','seem','seeming','seems','seemed',\
-                           'enough', 'both', 'all', 'your' 'those', 'this', 'these', \
+                           'enough', 'both', 'all', 'those', 'this', 'these', \
                            'their', 'the', 'that', 'some', 'our', 'no', 'neither', 'my',\
                            'its', 'his' 'her', 'every', 'either', 'each', 'any', 'another',\
                            'an', 'a', 'just', 'mere', 'such', 'merely' 'right', 'no', 'not',\
