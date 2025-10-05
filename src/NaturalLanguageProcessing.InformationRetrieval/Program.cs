@@ -186,7 +186,7 @@ internal static partial class Program
     private static void RealizeArticle(
         ref int id,
         StringBuilder titleBuilder,
-        StringBuilder authorBuilder,
+        StringBuilder summaryBuilder,
         List<Article> articles)
     {
         if (id == 0)
@@ -201,7 +201,7 @@ internal static partial class Program
 
         id = 0;
         titleBuilder.Clear();
-        authorBuilder.Clear();
+        summaryBuilder.Clear();
     }
 
     private static HashSet<string> Tokenize(string value)
