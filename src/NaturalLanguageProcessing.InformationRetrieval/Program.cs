@@ -12,21 +12,61 @@ using System.Text.RegularExpressions;
 
 namespace NaturalLanguageProcessing.InformationRetrieval;
 
-internal sealed class Article
+internal sealed class SparseVector
 {
-    public int Id { get; }
-    public string Title { get; }
-    public string Summary { get; }
+    private readonly Dictionary<string, double> _entries =
+        new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
 
-    public Article(int id, string title, string summary)
+    public double this[string token]
     {
-        Id = id;
-        Title = title;
-        Summary = summary;
+        get
+        {
+            return _entries.GetValueOrDefault(token);
+        }
+        set
+        {
+            _entries[token] = value;
+        }
+    }
+
+    public static double CosineSimilarity(SparseVector left, SparseVector right)
+    {
+        double dot = 0;
+        double magnitudeA = 0;
+
+        foreach (KeyValuePair<string, double> pair in left._entries)
+        {
+            double b = pair.Value;
+
+            dot += b * right[pair.Key];
+            magnitudeA += b * b;
+        }
+
+        if (magnitudeA == 0)
+        {
+            return 0;
+        }
+
+        double magnitudeB = 0;
+
+        foreach (double b in right._entries.Values)
+        {
+            magnitudeB += b * b;
+        }
+
+        if (magnitudeB == 0)
+        {
+            return 0;
+        }
+
+        magnitudeA = Math.Sqrt(magnitudeA);
+        magnitudeB = Math.Sqrt(magnitudeB);
+
+        return dot / (magnitudeA * magnitudeB);
     }
 }
 
-internal static partial class Program
+internal sealed partial class Article
 {
     private static readonly string[] delimiters = { " ", "\t", "\r", "\n" };
     private static readonly HashSet<string> stopWords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -55,16 +95,58 @@ internal static partial class Program
         "theirs", "you", "your", "yours", "me", "my", "mine", "I", "we", "us",
         "much", "and/or"
     };
-    private static readonly HashSet<string> tokens = new HashSet<string>();
-    private static readonly Dictionary<string, int> df =
-        new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-    private static readonly Dictionary<string, double> idf =
-        new Dictionary<string, double>();
 
     [GeneratedRegex(
         @"[^A-Za-z\s]",
         RegexOptions.IgnoreCase)]
     private static partial Regex TokenRegex();
+
+    public Article(int id, string title, string summary)
+    {
+        Id = id;
+        Title = title;
+        Tokens = TokenRegex()
+            .Replace(summary, " ")
+            .Split(delimiters, StringSplitOptions.RemoveEmptyEntries)
+            .Where(x => !stopWords.Contains(x))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    }
+
+    public int Id { get; }
+    public string Title { get; }
+    public HashSet<string> Tokens { get; } = new HashSet<string>();
+    
+    public SparseVector Vectorize(HashSet<string> tokens, SparseVector idf)
+    {
+        SparseVector result = new SparseVector();
+        Dictionary<string, int> tf =
+            new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (string token in Tokens)
+        {
+            tf[token] = tf.GetValueOrDefault(token) + 1;
+        }
+
+        foreach (string token in tf.Keys)
+        {
+            if (!tokens.Contains(token))
+            {
+                continue;
+            }
+
+            result[token] = tf[token] * idf[token];
+        }
+
+        return result;
+    }
+}
+
+internal static class Program
+{
+    private static readonly HashSet<string> tokens = new HashSet<string>();
+    private static readonly Dictionary<string, int> df =
+        new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+    private static readonly SparseVector idf = new SparseVector();
 
     private static void Main(string[] args)
     {
@@ -87,11 +169,9 @@ internal static partial class Program
 
         foreach (Article article in articles)
         {
-            HashSet<string> articleTokens = Tokenize(article.Summary);
+            tokens.UnionWith(article.Tokens);
 
-            tokens.UnionWith(articleTokens);
-
-            foreach (string token in articleTokens)
+            foreach (string token in article.Tokens)
             {
                 df[token] = df.GetValueOrDefault(token) + 1;
             }
@@ -202,14 +282,5 @@ internal static partial class Program
         id = 0;
         titleBuilder.Clear();
         summaryBuilder.Clear();
-    }
-
-    private static HashSet<string> Tokenize(string value)
-    {
-        return TokenRegex()
-            .Replace(value, " ")
-            .Split(delimiters, StringSplitOptions.RemoveEmptyEntries)
-            .Where(x => !stopWords.Contains(x))
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
     }
 }
