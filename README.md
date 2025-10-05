@@ -73,7 +73,7 @@ Viterbi and backpointer tables. This approach (integer keys in a square matrix)
 provided a significant performance improvement over string keys in an
 array-backed list of dictionaries.
 
-### Stage 3
+#### Stage 3
 
 In the third stage, I sought to increase the accuracy of the tagger by handling
 out-of-vocabulary words. I introduced Laplace smoothing by adding a constant
@@ -88,7 +88,7 @@ updated to match.
 In the tagging step, if a word is not in the vocabulary, it is replaced with the
 as `Unknown_Word` token.
 
-### Stage 4
+#### Stage 4
 
 Next, I introduced more advanced classification for unknown words. A set of
 bitflags identifies the kind of word based on its "shape." For example, the
@@ -105,7 +105,7 @@ correctly; for example, the sentence "NASA is amazing" becomes "nASA is
 amazing." Since "nASA" contains uppercase letters, the tagger classifies it
 alongside other unknown initialisms.
 
-### Stage 5
+#### Stage 5
 
 Finally, I added morphological classification of unknown words using suffixes.
 I initialize the suffix set with a collection of English suffixes. Then, when
