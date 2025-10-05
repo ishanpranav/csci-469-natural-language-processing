@@ -1,0 +1,172 @@
+﻿// Program.cs
+// Copyright (c) 2025 Ishan Pranav
+// Licensed under the MIT license.
+
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Text;
+
+namespace NaturalLanguageProcessing.InformationRetrieval;
+
+internal class Article
+{
+    public int Id { get; }
+    public string Title { get; }
+    public string Author { get; }
+    public string Metadata { get; }
+    public string Summary { get; }
+
+    public Article(int id,  string title, string author, string metadata, string summary)
+    {
+        Id = id;
+        Title = title;
+        Author = author;
+        Metadata = metadata;
+        Summary = summary;
+    }
+}
+
+internal static class Program
+{
+    private static void Main(string[] args)
+    {
+        if (args.Length < 2)
+        {
+            Console.WriteLine(
+                "Usage: {0} <file> <qry_file>",
+                Process.GetCurrentProcess().ProcessName);
+
+            return;
+        }
+
+        string fileName = args[0];
+        string qryFileName = args[1];
+
+        CheckFile(fileName);
+        CheckFile(qryFileName);
+
+        List<Article> articles = ReadFile(fileName);
+    }
+
+    private static void CheckFile(string fileName)
+    {
+        if (!File.Exists(fileName))
+        {
+            Console.WriteLine("File does not exist: \"{0}\".", fileName);
+            Environment.Exit(0);
+        }
+    }
+
+    private static List<Article> ReadFile(string fileName)
+    {
+        using StreamReader reader = File.OpenText(fileName);
+
+        string? line;
+        char section = '\0';
+        int id = 0;
+        StringBuilder titleBuilder = new StringBuilder();
+        StringBuilder authorBuilder = new StringBuilder();
+        StringBuilder metadataBuilder = new StringBuilder();
+        StringBuilder summaryBuilder = new StringBuilder();
+        List<Article> articles = new List<Article>();
+
+        while ((line = reader.ReadLine()) != null)
+        {
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                continue;
+            }
+
+            if (line[0] == '.')
+            {
+                if (line.Length < 2)
+                {
+                    throw new FormatException();
+                }
+
+                section = line[1];
+                line = line.Substring(2);
+            }
+
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                continue;
+            }
+
+            switch (section)
+            {
+                case 'I':
+                    RealizeArticle(
+                        ref id,
+                        titleBuilder,
+                        authorBuilder, 
+                        metadataBuilder, 
+                        summaryBuilder,
+                        articles);
+
+                    id = int.Parse(line);
+                    break;
+
+                case 'T':
+                    titleBuilder.AppendLine(line);
+                    break;
+
+                case 'A':
+                    authorBuilder.AppendLine(line);
+                    break;
+
+                case 'B':
+                    metadataBuilder.AppendLine(line);
+                    break;
+
+                case 'W':
+                    summaryBuilder.AppendLine(line);
+                    break;
+            }
+        }
+
+        RealizeArticle(
+            ref id,
+            titleBuilder,
+            authorBuilder,
+            metadataBuilder,
+            summaryBuilder,
+            articles);
+
+        return articles;
+    }
+
+    private static void RealizeArticle(
+        ref int id,
+        StringBuilder titleBuilder,
+        StringBuilder authorBuilder,
+        StringBuilder metadataBuilder,
+        StringBuilder summaryBuilder,
+        List<Article> articles)
+    {
+        if (id == 0)
+        {
+            return;
+        }
+
+        articles.Add(new Article(
+            id,
+            titleBuilder.ToString(),
+            authorBuilder.ToString(),
+            metadataBuilder.ToString(),
+            summaryBuilder.ToString()));
+
+        id = 0;
+        titleBuilder.Clear();
+        authorBuilder.Clear();
+        metadataBuilder.Clear();
+        summaryBuilder.Clear();
+    }
+
+    private static void ReadQryFile(string fileName)
+    {
+
+    }
+}

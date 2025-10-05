@@ -56,21 +56,16 @@ internal static class Program
             return;
         }
 
-        //string posFileName = args[0];
-        //string wordsFileName = args[1];
-        string posFileName = "";
+        string posFileName = args[0];
+        string wordsFileName = args[1];
 
         CheckFile(posFileName);
         CheckFile(wordsFileName);
 
         maxSuffixLength = suffixes.Max(x => x.Length);
 
-        Stopwatch watch = Stopwatch.StartNew();
-
         ReadPosFile(posFileName);
         TagFile(wordsFileName);
-        watch.Stop();
-        Console.WriteLine("{0:n0} ms elapsed.", watch.ElapsedMilliseconds);
     }
 
     private static void CheckFile(string fileName)
