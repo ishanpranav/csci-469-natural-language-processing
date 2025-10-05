@@ -29,7 +29,7 @@ internal sealed class SparseVector
         }
     }
 
-    public static double CosineSimilarity(SparseVector left, SparseVector right)
+    public static double CosSimilarity(SparseVector left, SparseVector right)
     {
         double dot = 0;
         double magnitudeA = 0;
@@ -66,7 +66,7 @@ internal sealed class SparseVector
     }
 }
 
-internal sealed partial class Article
+internal sealed partial class Document
 {
     private static readonly string[] delimiters = { " ", "\t", "\r", "\n" };
     private static readonly HashSet<string> stopWords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -101,7 +101,7 @@ internal sealed partial class Article
         RegexOptions.IgnoreCase)]
     private static partial Regex TokenRegex();
 
-    public Article(int id, string title, string summary)
+    public Document(int id, string title, string summary)
     {
         Id = id;
         Title = title;
@@ -115,7 +115,7 @@ internal sealed partial class Article
     public int Id { get; }
     public string Title { get; }
     public HashSet<string> Tokens { get; } = new HashSet<string>();
-    
+
     public SparseVector Vectorize(HashSet<string> tokens, SparseVector idf)
     {
         SparseVector result = new SparseVector();
@@ -143,7 +143,8 @@ internal sealed partial class Article
 
 internal static class Program
 {
-    private static readonly HashSet<string> tokens = new HashSet<string>();
+    private static readonly HashSet<string> tokens =
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     private static readonly Dictionary<string, int> df =
         new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
     private static readonly SparseVector idf = new SparseVector();
@@ -165,9 +166,9 @@ internal static class Program
         CheckFile(fileName);
         CheckFile(qryFileName);
 
-        List<Article> articles = ReadFile(fileName);
+        List<Document> articles = ReadFile(fileName);
 
-        foreach (Article article in articles)
+        foreach (Document article in articles)
         {
             tokens.UnionWith(article.Tokens);
 
@@ -181,10 +182,42 @@ internal static class Program
 
         foreach (string token in tokens)
         {
-            idf[token] = Math.Log(nu / (1d  + df.GetValueOrDefault(token))) + 1;
+            idf[token] = Math.Log(nu / (1d + df.GetValueOrDefault(token))) + 1;
         }
 
-        List<Article> queries = ReadFile(qryFileName);
+        SparseVector[] articleVectors = new SparseVector[articles.Count];
+
+        for (int i = 0; i < articleVectors.Length; i++)
+        {
+            articleVectors[i] = articles[i].Vectorize(tokens, idf);
+        }
+
+        List<Document> queries = ReadFile(qryFileName);
+
+        using StreamWriter writer = File.CreateText("output.txt");
+
+        for (int i = 0; i < queries.Count; i++)
+        {
+            SparseVector queryVector = queries[i].Vectorize(tokens, idf);
+            List<(int id, double cosSimilarity)> results = new List<(int id, double score)>();
+
+            for (int j = 0; j < articles.Count; j++)
+            {
+                double cosSimilarity = SparseVector.CosSimilarity(
+                    queryVector,
+                    articleVectors[j]);
+
+                if (cosSimilarity > 0)
+                {
+                    results.Add((j + 1, cosSimilarity));
+                }
+            }
+
+            foreach ((int id, double cosSimilarity) in results.OrderByDescending(x => x.cosSimilarity))
+            {
+                writer.WriteLine("{0} {1} {2:f4}", i + 1, id, cosSimilarity);
+            }
+        }
     }
 
     private static void CheckFile(string fileName)
@@ -196,7 +229,7 @@ internal static class Program
         }
     }
 
-    private static List<Article> ReadFile(string fileName)
+    private static List<Document> ReadFile(string fileName)
     {
         using StreamReader reader = File.OpenText(fileName);
 
@@ -207,7 +240,7 @@ internal static class Program
         StringBuilder authorBuilder = new StringBuilder();
         StringBuilder metadataBuilder = new StringBuilder();
         StringBuilder summaryBuilder = new StringBuilder();
-        List<Article> articles = new List<Article>();
+        List<Document> articles = new List<Document>();
 
         while ((line = reader.ReadLine()) != null)
         {
@@ -235,7 +268,7 @@ internal static class Program
             switch (section)
             {
                 case 'I':
-                    RealizeArticle(
+                    RealizeDocument(
                         ref id,
                         titleBuilder,
                         summaryBuilder,
@@ -254,7 +287,7 @@ internal static class Program
             }
         }
 
-        RealizeArticle(
+        RealizeDocument(
             ref id,
             titleBuilder,
             summaryBuilder,
@@ -263,18 +296,18 @@ internal static class Program
         return articles;
     }
 
-    private static void RealizeArticle(
+    private static void RealizeDocument(
         ref int id,
         StringBuilder titleBuilder,
         StringBuilder summaryBuilder,
-        List<Article> articles)
+        List<Document> articles)
     {
         if (id == 0)
         {
             return;
         }
 
-        articles.Add(new Article(
+        articles.Add(new Document(
             id,
             titleBuilder.ToString(),
             summaryBuilder.ToString()));
