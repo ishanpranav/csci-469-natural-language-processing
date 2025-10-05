@@ -32,7 +32,7 @@ cat WSJ_23.words > words_file.words
 
 ### Implementation
 
-This program is implemented in C\# on the .NET framework. I develoepd it in
+This program is implemented in C\# on the .NET framework. I developed it in
 five stages:
 
 1. parsing and summarizing the training data;
@@ -63,7 +63,7 @@ keys like word-tag pairs and source-target-tag pairs.
 
 #### Stage 2
 
-In the second stage, I implemented Viterbi's algorithm. First, thes `n` POS tags
+In the second stage, I implemented Viterbi's algorithm. First, the `n` POS tags
 are numbered as states `0` to `n+1`, where state `0` is the sentence start
 marker, state `n+1` is the sentence end marker, and states `1` to `n` are the
 POS tags. This allows states to be indexed by number. Numbering states also
