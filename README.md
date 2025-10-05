@@ -1,10 +1,28 @@
-# Viterbi HMM POS tagger
+# Natural Language Processing
 
-This is a Viterbi hidden Markov model (HMM) part of speech (POS) tagging program
-implemented in C\# for the NYU CSCI 469 Natural Language Processing course and
-distributed under the MIT license.
+This is a collection of projects implemented in C\# and Python for the NYU CSCI
+469 Natural Language Processing course and distributed under the MIT license.
 
-## Usage
+## Regular expressions
+
+This is a pair of regular expression programs.
+
+### Usage
+
+```sh
+./NaturalLanguageProcessing.DollarRegex test_dollar_phone_corpus.txt > dollar_output.txt
+```
+
+```sh
+./NaturalLanguageProcessing.PhoneRegex test_dollar_phone_corpus.txt > telephone_output.txt
+```
+
+## Viterbi HMM POS tagger
+
+This is a Viterbi hidden Markov model (HMM) part of speech (POS) tagging
+program.
+
+### Usage
 
 ```sh
 cat WSJ_02-21.pos WSJ_24.pos > pos_file.pos
@@ -12,10 +30,10 @@ cat WSJ_23.words > words_file.words
 ./NaturalLanguageProcessing.ViterbiTagger pos_file.pos words_file.words > submission.pos
 ```
 
-## Implementation
+### Implementation
 
-This program is implemented in C\# on the .NET framework. I develoepd it in five
-stages:
+This program is implemented in C\# on the .NET framework. I develoepd it in
+five stages:
 
 1. parsing and summarizing the training data;
 2. implementing and testing Viterbi's algorithm;
@@ -23,7 +41,7 @@ stages:
 4. classifying unknown words by shape; and
 5. classifying unknown words by suffix.
 
-### Stage 1
+#### Stage 1
 
 First, I implemented a parser for the training (*.pos) file. This algorithm
 required careful bookkeeping for the sentence start (`Begin_Sent`) and end
@@ -43,7 +61,7 @@ contains-key, get-value-by-key, and set-value-by-key in constant time and allows
 iteration over all key-value pairs in linear time. Tuples are used as composite
 keys like word-tag pairs and source-target-tag pairs.
 
-### Stage 2
+#### Stage 2
 
 In the second stage, I implemented Viterbi's algorithm. First, thes `n` POS tags
 are numbered as states `0` to `n+1`, where state `0` is the sentence start
@@ -55,7 +73,7 @@ Viterbi and backpointer tables. This approach (integer keys in a square matrix)
 provided a significant performance improvement over string keys in an
 array-backed list of dictionaries.
 
-## Stage 3
+### Stage 3
 
 In the third stage, I sought to increase the accuracy of the tagger by handling
 out-of-vocabulary words. I introduced Laplace smoothing by adding a constant
@@ -70,7 +88,7 @@ updated to match.
 In the tagging step, if a word is not in the vocabulary, it is replaced with the
 as `Unknown_Word` token.
 
-## Stage 4
+### Stage 4
 
 Next, I introduced more advanced classification for unknown words. A set of
 bitflags identifies the kind of word based on its "shape." For example, the
@@ -87,7 +105,7 @@ correctly; for example, the sentence "NASA is amazing" becomes "nASA is
 amazing." Since "nASA" contains uppercase letters, the tagger classifies it
 alongside other unknown initialisms.
 
-## Stage 5
+### Stage 5
 
 Finally, I added morphological classification of unknown words using suffixes.
 I initialize the suffix set with a collection of English suffixes. Then, when
@@ -100,4 +118,4 @@ attributes to produce many combinations of unknown word classes.
 
 ## License
 
-This project is licensed with the [MIT](LICENSE.txt) license.
+This repository is licensed with the [MIT](LICENSE.txt) license.
