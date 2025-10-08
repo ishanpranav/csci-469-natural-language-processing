@@ -37,7 +37,7 @@ internal sealed class Document
     public IReadOnlyDictionary<string, int> TermFrequencies { get; }
 
     public IReadOnlyDictionary<string, double> GetOrComputeTfidf(
-        int n, 
+        int n,
         IReadOnlyDictionary<string, double> idf)
     {
         if (_tfidf != null && _n == n && _idf == idf)
@@ -66,7 +66,7 @@ internal sealed class Document
 
 internal static partial class Program
 {
-    private static readonly HashSet<string> stopWords = 
+    private static readonly HashSet<string> stopWords =
         new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "a", "the", "an", "and", "or", "but", "about", "above", "after",
@@ -114,13 +114,8 @@ internal static partial class Program
 
         List<Document> articles = ReadFile(fileName);
         List<Document> queries = ReadFile(qryFileName);
-        Dictionary<string, double> articleIdf =
-            new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
-        Dictionary<string, double> queryIdf =
-            new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
-
-        GetIdf(articleIdf, articles);
-        GetIdf(queryIdf, queries);
+        Dictionary<string, double> articleIdf = GetIdf(articles);
+        Dictionary<string, double> queryIdf = GetIdf(queries);
 
         using StreamWriter writer = File.CreateText("output.txt");
 
@@ -231,8 +226,11 @@ internal static partial class Program
         summaryBuilder.Clear();
     }
 
-    private static void GetIdf(Dictionary<string, double> results, IReadOnlyCollection<Document> documents)
+    private static Dictionary<string, double> GetIdf(IReadOnlyCollection<Document> documents)
     {
+        Dictionary<string, double> results =
+            new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+
         foreach (Document document in documents)
         {
             foreach (string token in document.TermFrequencies.Keys)
@@ -245,6 +243,8 @@ internal static partial class Program
         {
             results[entry.Key] = Math.Log(documents.Count / (entry.Value + 1));
         }
+
+        return results;
     }
 
     private static double CosSimilarity(
