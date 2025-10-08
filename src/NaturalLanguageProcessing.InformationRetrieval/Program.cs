@@ -116,33 +116,30 @@ internal static partial class Program
         GetIdf(articleIdf, articles);
         GetIdf(queryIdf, queries);
 
-        using (var writer = new StreamWriter("output.txt"))
+        using StreamWriter writer = File.CreateText("output.txt");
+
+        for (int i = 0; i < queries.Count; i++)
         {
-            for (int i = 0; i < queries.Count; i++)
+            IReadOnlyDictionary<string, double> queryVector =
+                queries[i].GetOrComputeTfidf(queries.Count, queryIdf);
+            double normalizedQuery = Math.Sqrt(queryVector.Sum(x => x.Value * x.Value));
+            List<(int articleId, double score)> results = new List<(int articleId, double score)>();
+
+            for (int j = 0; j < articles.Count; ++j)
             {
-                IReadOnlyDictionary<string, double> queryVector =
-                    queries[i].GetOrComputeTfidf(queries.Count, queryIdf);
-                double normalizedQuery = Math.Sqrt(queryVector.Sum(x => x.Value * x.Value));
-                List<(int articleId, double score)> results = new List<(int articleId, double score)>();
+                IReadOnlyDictionary<string, double> articleVector =
+                    articles[j].GetOrComputeTfidf(articles.Count, articleIdf);
 
-                for (int j = 0; j < articles.Count; ++j)
-                {
-                    IReadOnlyDictionary<string, double> articleVector =
-                        articles[j].GetOrComputeTfidf(articles.Count, articleIdf);
+                results.Add((j + 1, CosSimilarity(normalizedQuery, articleVector, queryVector)));
+            }
 
-                    results.Add((j + 1, CosSimilarity(normalizedQuery, articleVector, queryVector)));
-                }
-
-                foreach ((int articleId, double score) in results
-                    .OrderByDescending(x => x.score)
-                    .ThenBy(x => x.articleId))
-                {
-                    writer.WriteLine("{0} {1} {2}", i + 1, articleId, score);
-                }
+            foreach ((int articleId, double score) in results
+                .OrderByDescending(x => x.score)
+                .ThenBy(x => x.articleId))
+            {
+                writer.WriteLine("{0} {1} {2}", i + 1, articleId, score);
             }
         }
-
-        Console.WriteLine("Done.");
     }
 
     private static void CheckFile(string fileName)
