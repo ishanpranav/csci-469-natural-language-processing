@@ -10,65 +10,57 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace NaturalLanguageProcessing.InformationRetrieval;
-
-internal sealed class SparseVector
+internal sealed class Document
 {
-    private readonly Dictionary<string, double> _entries =
-        new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+    private int _n;
+    private IReadOnlyDictionary<string, double>? _idf;
+    private Dictionary<string, double>? _tfidf = null;
 
-    public double this[string token]
+    public Document(IReadOnlyCollection<string> tokens)
     {
-        get
+        Tokens = tokens;
+
+        Dictionary<string, int> tf = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (string token in tokens)
         {
-            return _entries.GetValueOrDefault(token);
+            tf[token] = tf.GetValueOrDefault(token) + 1;
         }
-        set
-        {
-            _entries[token] = value;
-        }
+
+        TermFrequencies = tf;
     }
 
-    public static double CosSimilarity(SparseVector left, SparseVector right)
+    public IReadOnlyCollection<string> Tokens { get; }
+    public IReadOnlyDictionary<string, int> TermFrequencies { get; }
+
+    public IReadOnlyDictionary<string, double> GetOrComputeTfidf(int n, IReadOnlyDictionary<string, double> idf)
     {
-        double dot = 0;
-        double magnitudeA = 0;
-
-        foreach (KeyValuePair<string, double> pair in left._entries)
+        if (_tfidf != null && _n == n && _idf == idf)
         {
-            double b = pair.Value;
-
-            dot += b * right[pair.Key];
-            magnitudeA += b * b;
+            return _tfidf;
         }
 
-        if (magnitudeA == 0)
+        Dictionary<string, double> results =
+            new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (KeyValuePair<string, int> entry in TermFrequencies)
         {
-            return 0;
+            double tfValue = entry.Value > 0 ? 1.0 + Math.Log(entry.Value) : 0.0;
+            double idfValue = idf.ContainsKey(entry.Key) ? idf[entry.Key] : Math.Log(n / 1d);
+
+            results[entry.Key] = tfValue * idfValue;
         }
 
-        double magnitudeB = 0;
+        _tfidf = results;
+        _n = n;
+        _idf = idf;
 
-        foreach (double b in right._entries.Values)
-        {
-            magnitudeB += b * b;
-        }
-
-        if (magnitudeB == 0)
-        {
-            return 0;
-        }
-
-        magnitudeA = Math.Sqrt(magnitudeA);
-        magnitudeB = Math.Sqrt(magnitudeB);
-
-        return dot / (magnitudeA * magnitudeB);
+        return _tfidf;
     }
 }
 
-internal sealed partial class Document
+internal static partial class Program
 {
-    private static readonly string[] delimiters = { " ", "\t", "\r", "\n" };
     private static readonly HashSet<string> stopWords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
         "a", "the", "an", "and", "or", "but", "about", "above", "after",
@@ -96,66 +88,14 @@ internal sealed partial class Document
         "much", "and/or"
     };
 
-    [GeneratedRegex(
-        @"[^A-Za-z\s]",
-        RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"[A-Za-z]+", RegexOptions.IgnoreCase)]
     private static partial Regex TokenRegex();
-
-    public Document(int id, string title, string summary)
-    {
-        Id = id;
-        Title = title;
-        Tokens = TokenRegex()
-            .Replace(summary, " ")
-            .Split(delimiters, StringSplitOptions.RemoveEmptyEntries)
-            .Where(x => !stopWords.Contains(x))
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-    }
-
-    public int Id { get; }
-    public string Title { get; }
-    public HashSet<string> Tokens { get; } = new HashSet<string>();
-
-    public SparseVector Vectorize(HashSet<string> tokens, SparseVector idf)
-    {
-        SparseVector result = new SparseVector();
-        Dictionary<string, int> tf =
-            new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (string token in Tokens)
-        {
-            tf[token] = tf.GetValueOrDefault(token) + 1;
-        }
-
-        foreach (string token in tf.Keys)
-        {
-            if (!tokens.Contains(token))
-            {
-                continue;
-            }
-
-            result[token] = tf[token] * idf[token];
-        }
-
-        return result;
-    }
-}
-
-internal static class Program
-{
-    private static readonly HashSet<string> tokens =
-        new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-    private static readonly Dictionary<string, int> df =
-        new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-    private static readonly SparseVector idf = new SparseVector();
 
     private static void Main(string[] args)
     {
         if (args.Length < 2)
         {
-            Console.WriteLine(
-                "Usage: {0} <file> <qry_file>",
-                Process.GetCurrentProcess().ProcessName);
+            Console.WriteLine("Usage: {0} <file> <qry_file>", Process.GetCurrentProcess().ProcessName);
 
             return;
         }
@@ -167,57 +107,42 @@ internal static class Program
         CheckFile(qryFileName);
 
         List<Document> articles = ReadFile(fileName);
-
-        foreach (Document article in articles)
-        {
-            tokens.UnionWith(article.Tokens);
-
-            foreach (string token in article.Tokens)
-            {
-                df[token] = df.GetValueOrDefault(token) + 1;
-            }
-        }
-
-        double nu = articles.Count + 1;
-
-        foreach (string token in tokens)
-        {
-            idf[token] = Math.Log(nu / (1d + df.GetValueOrDefault(token))) + 1;
-        }
-
-        SparseVector[] articleVectors = new SparseVector[articles.Count];
-
-        for (int i = 0; i < articleVectors.Length; i++)
-        {
-            articleVectors[i] = articles[i].Vectorize(tokens, idf);
-        }
-
         List<Document> queries = ReadFile(qryFileName);
+        Dictionary<string, double> articleIdf =
+            new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+        Dictionary<string, double> queryIdf =
+            new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
 
-        using StreamWriter writer = File.CreateText("output.txt");
+        GetIdf(articleIdf, articles);
+        GetIdf(queryIdf, queries);
 
-        for (int i = 0; i < queries.Count; i++)
+        using (var writer = new StreamWriter("output.txt"))
         {
-            SparseVector queryVector = queries[i].Vectorize(tokens, idf);
-            List<(int id, double cosSimilarity)> results = new List<(int id, double score)>();
-
-            for (int j = 0; j < articles.Count; j++)
+            for (int i = 0; i < queries.Count; i++)
             {
-                double cosSimilarity = SparseVector.CosSimilarity(
-                    queryVector,
-                    articleVectors[j]);
+                IReadOnlyDictionary<string, double> queryVector =
+                    queries[i].GetOrComputeTfidf(queries.Count, queryIdf);
+                double normalizedQuery = Math.Sqrt(queryVector.Sum(x => x.Value * x.Value));
+                List<(int articleId, double score)> results = new List<(int articleId, double score)>();
 
-                if (cosSimilarity > 0)
+                for (int j = 0; j < articles.Count; ++j)
                 {
-                    results.Add((j + 1, cosSimilarity));
+                    IReadOnlyDictionary<string, double> articleVector =
+                        articles[j].GetOrComputeTfidf(articles.Count, articleIdf);
+
+                    results.Add((j + 1, CosSimilarity(normalizedQuery, articleVector, queryVector)));
+                }
+
+                foreach ((int articleId, double score) in results
+                    .OrderByDescending(x => x.score)
+                    .ThenBy(x => x.articleId))
+                {
+                    writer.WriteLine("{0} {1} {2}", i + 1, articleId, score);
                 }
             }
-
-            foreach ((int id, double cosSimilarity) in results.OrderByDescending(x => x.cosSimilarity))
-            {
-                writer.WriteLine("{0} {1} {2:f4}", i + 1, id, cosSimilarity);
-            }
         }
+
+        Console.WriteLine("Done.");
     }
 
     private static void CheckFile(string fileName)
@@ -229,18 +154,15 @@ internal static class Program
         }
     }
 
-    private static List<Document> ReadFile(string fileName)
+    private static List<Document> ReadFile(string filename)
     {
-        using StreamReader reader = File.OpenText(fileName);
+        using StreamReader reader = File.OpenText(filename);
 
         string? line;
         char section = '\0';
         int id = 0;
-        StringBuilder titleBuilder = new StringBuilder();
-        StringBuilder authorBuilder = new StringBuilder();
-        StringBuilder metadataBuilder = new StringBuilder();
-        StringBuilder summaryBuilder = new StringBuilder();
-        List<Document> articles = new List<Document>();
+        StringBuilder abstractBuilder = new StringBuilder();
+        List<Document> results = new List<Document>();
 
         while ((line = reader.ReadLine()) != null)
         {
@@ -268,52 +190,84 @@ internal static class Program
             switch (section)
             {
                 case 'I':
-                    RealizeDocument(
-                        ref id,
-                        titleBuilder,
-                        summaryBuilder,
-                        articles);
+                    RealizeDocument(ref id, abstractBuilder, results);
 
                     id = int.Parse(line);
                     break;
 
-                case 'T':
-                    titleBuilder.AppendLine(line);
-                    break;
-
                 case 'W':
-                    summaryBuilder.AppendLine(line);
+                    abstractBuilder.AppendLine(line);
                     break;
             }
         }
 
-        RealizeDocument(
-            ref id,
-            titleBuilder,
-            summaryBuilder,
-            articles);
+        RealizeDocument(ref id, abstractBuilder, results);
 
-        return articles;
+        return results;
     }
 
     private static void RealizeDocument(
         ref int id,
-        StringBuilder titleBuilder,
         StringBuilder summaryBuilder,
-        List<Document> articles)
+        List<Document> documents)
     {
         if (id == 0)
         {
             return;
         }
 
-        articles.Add(new Document(
-            id,
-            titleBuilder.ToString(),
-            summaryBuilder.ToString()));
-
         id = 0;
-        titleBuilder.Clear();
+
+        List<string> tokens = TokenRegex()
+            .Matches(summaryBuilder.ToString())
+            .Select(x => x.Value.ToLowerInvariant())
+            .Where(x => x.Length > 0 && !stopWords.Contains(x))
+            .ToList();
+
+        documents.Add(new Document(tokens));
         summaryBuilder.Clear();
+    }
+
+    private static void GetIdf(Dictionary<string, double> results, IReadOnlyCollection<Document> documents)
+    {
+        foreach (Document document in documents)
+        {
+            foreach (string token in document.TermFrequencies.Keys)
+            {
+                results[token] = results.GetValueOrDefault(token) + 1;
+            }
+        }
+
+        foreach (KeyValuePair<string, double> entry in results)
+        {
+            results[entry.Key] = Math.Log(documents.Count / (entry.Value + 1));
+        }
+    }
+
+    private static double CosSimilarity(
+        double normalizedQuery,
+        IReadOnlyDictionary<string, double> articleVector,
+        IReadOnlyDictionary<string, double> queryVector)
+    {
+        if (normalizedQuery == 0)
+        {
+            return 0;
+        }
+
+        double normalizedArticle = Math.Sqrt(articleVector.Sum(x => x.Value * x.Value));
+
+        if (normalizedArticle == 0)
+        {
+            return 0;
+        }
+
+        double dot = 0.0;
+
+        foreach (string token in queryVector.Keys)
+        {
+            dot += queryVector[token] * articleVector.GetValueOrDefault(token);
+        }
+
+        return dot / (normalizedQuery * normalizedArticle);
     }
 }
