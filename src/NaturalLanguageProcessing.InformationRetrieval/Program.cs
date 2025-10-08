@@ -10,6 +10,8 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
+namespace NaturalLanguageProcessing.InformationRetrieval;
+
 internal sealed class Document
 {
     private int _n;
