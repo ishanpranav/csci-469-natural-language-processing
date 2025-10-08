@@ -20,7 +20,8 @@ internal sealed class Document
     {
         Tokens = tokens;
 
-        Dictionary<string, int> tf = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        Dictionary<string, int> tf =
+            new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
         foreach (string token in tokens)
         {
@@ -33,7 +34,9 @@ internal sealed class Document
     public IReadOnlyCollection<string> Tokens { get; }
     public IReadOnlyDictionary<string, int> TermFrequencies { get; }
 
-    public IReadOnlyDictionary<string, double> GetOrComputeTfidf(int n, IReadOnlyDictionary<string, double> idf)
+    public IReadOnlyDictionary<string, double> GetOrComputeTfidf(
+        int n, 
+        IReadOnlyDictionary<string, double> idf)
     {
         if (_tfidf != null && _n == n && _idf == idf)
         {
@@ -61,32 +64,33 @@ internal sealed class Document
 
 internal static partial class Program
 {
-    private static readonly HashSet<string> stopWords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-    {
-        "a", "the", "an", "and", "or", "but", "about", "above", "after",
-        "along", "amid", "among", "as", "at", "by", "for", "from", "in",
-        "into", "like", "minus", "near", "of", "off", "on",
-        "onto", "out", "over", "past", "per", "plus", "since", "till", "to",
-        "under", "until", "up", "via", "vs", "with", "that", "can", "cannot",
-        "could", "may", "might", "must", "need", "ought", "shall", "should",
-        "will", "would", "have", "had", "has", "having", "be", "is", "am",
-        "are", "was", "were", "being", "been", "get", "gets", "got", "gotten",
-        "getting", "seem", "seeming", "seems", "seemed", "enough", "both",
-        "all", "those", "this", "these", "their", "the", "that", "some", "our",
-        "no", "neither", "my", "its", "his", "her", "every", "either", "each",
-        "any", "another", "an", "a", "just", "mere", "such", "merely", "right",
-        "no", "not", "only", "sheer", "even", "especially", "namely", "as",
-        "more",  "most", "less", "least", "so", "enough", "too", "pretty",
-        "quite", "rather", "somewhat", "sufficiently", "same", "different",
-        "such", "when", "why", "where", "how", "what", "who", "whom", "which",
-        "whether", "why", "whose", "if", "anybody", "anyone", "anyplace",
-        "anything", "anytime", "anywhere", "everybody", "everyday",
-        "everyone", "everyplace", "everything", "everywhere", "whatever",
-        "whenever", "wherever", "whichever", "whoever", "whomever", "he",
-        "him", "his", "her", "she", "it", "they", "them", "its", "their",
-        "theirs", "you", "your", "yours", "me", "my", "mine", "I", "we", "us",
-        "much", "and/or"
-    };
+    private static readonly HashSet<string> stopWords = 
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "a", "the", "an", "and", "or", "but", "about", "above", "after",
+            "along", "amid", "among", "as", "at", "by", "for", "from", "in",
+            "into", "like", "minus", "near", "of", "off", "on",
+            "onto", "out", "over", "past", "per", "plus", "since", "till", "to",
+            "under", "until", "up", "via", "vs", "with", "that", "can", "cannot",
+            "could", "may", "might", "must", "need", "ought", "shall", "should",
+            "will", "would", "have", "had", "has", "having", "be", "is", "am",
+            "are", "was", "were", "being", "been", "get", "gets", "got", "gotten",
+            "getting", "seem", "seeming", "seems", "seemed", "enough", "both",
+            "all", "those", "this", "these", "their", "the", "that", "some", "our",
+            "no", "neither", "my", "its", "his", "her", "every", "either", "each",
+            "any", "another", "an", "a", "just", "mere", "such", "merely", "right",
+            "no", "not", "only", "sheer", "even", "especially", "namely", "as",
+            "more",  "most", "less", "least", "so", "enough", "too", "pretty",
+            "quite", "rather", "somewhat", "sufficiently", "same", "different",
+            "such", "when", "why", "where", "how", "what", "who", "whom", "which",
+            "whether", "why", "whose", "if", "anybody", "anyone", "anyplace",
+            "anything", "anytime", "anywhere", "everybody", "everyday",
+            "everyone", "everyplace", "everything", "everywhere", "whatever",
+            "whenever", "wherever", "whichever", "whoever", "whomever", "he",
+            "him", "his", "her", "she", "it", "they", "them", "its", "their",
+            "theirs", "you", "your", "yours", "me", "my", "mine", "I", "we", "us",
+            "much", "and/or"
+        };
 
     [GeneratedRegex(@"[A-Za-z]+", RegexOptions.IgnoreCase)]
     private static partial Regex TokenRegex();
@@ -217,7 +221,7 @@ internal static partial class Program
 
         List<string> tokens = TokenRegex()
             .Matches(summaryBuilder.ToString())
-            .Select(x => x.Value.ToLowerInvariant())
+            .Select(x => x.Value)
             .Where(x => x.Length > 0 && !stopWords.Contains(x))
             .ToList();
 
@@ -258,12 +262,7 @@ internal static partial class Program
             return 0;
         }
 
-        double dot = 0.0;
-
-        foreach (string token in queryVector.Keys)
-        {
-            dot += queryVector[token] * articleVector.GetValueOrDefault(token);
-        }
+        double dot = queryVector.Keys.Sum(x => queryVector[x] * articleVector.GetValueOrDefault(x));
 
         return dot / (normalizedQuery * normalizedArticle);
     }
