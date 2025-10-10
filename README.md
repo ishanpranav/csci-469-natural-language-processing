@@ -125,6 +125,10 @@ This is a TF-IDF information retrieval system.
 ./NaturalLanguageProcessing.InformationRetrieval cran.all.1400 cran.qry
 ```
 
+### Implementation
+
+This program is implemented in C\#/.NET.
+
 #### Tokenization
 
 Documents and queries are tokenized using a simple regular expression
