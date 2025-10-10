@@ -2,6 +2,12 @@
 // Copyright (c) 2025 Ishan Pranav
 // Licensed under the MIT license.
 
+// References:
+//  - https://gist.github.com/sebleier/554280 (NLTK's list of english stopwords)
+// This resource gives a list of English stopwords. Including these words
+// improves the MAP score.
+
+using Porter2Stemmer;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,50 +20,61 @@ namespace NaturalLanguageProcessing.InformationRetrieval;
 
 internal sealed class Document
 {
-    private int _n;
+    private const int TitleWeight = 4;
+
     private IReadOnlyDictionary<string, double>? _idf;
     private Dictionary<string, double>? _tfidf = null;
 
-    public Document(IReadOnlyCollection<string> tokens)
+    public Document(IReadOnlyCollection<string> titleTokens, IReadOnlyCollection<string> summaryTokens)
     {
-        Tokens = tokens;
+        TitleTokens = titleTokens;
+        SummaryTokens = summaryTokens;
 
         Dictionary<string, int> tf =
             new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (string token in tokens)
+        foreach (string token in summaryTokens)
         {
             tf[token] = tf.GetValueOrDefault(token) + 1;
+        }
+
+        foreach (string token in titleTokens)
+        {
+            tf[token] = tf.GetValueOrDefault(token) + TitleWeight;
         }
 
         TermFrequencies = tf;
     }
 
-    public IReadOnlyCollection<string> Tokens { get; }
+    public IReadOnlyCollection<string> TitleTokens { get; }
+    public IReadOnlyCollection<string> SummaryTokens { get; }
     public IReadOnlyDictionary<string, int> TermFrequencies { get; }
 
-    public IReadOnlyDictionary<string, double> GetOrComputeTfidf(
-        int n,
-        IReadOnlyDictionary<string, double> idf)
+    public IReadOnlyDictionary<string, double> GetOrComputeTfidf(IReadOnlyDictionary<string, double> idf)
     {
-        if (_tfidf != null && _n == n && _idf == idf)
+        if (_tfidf != null && _idf == idf)
         {
             return _tfidf;
         }
 
         Dictionary<string, double> results =
             new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+        int count = SummaryTokens.Count + TitleTokens.Count * TitleWeight;
 
         foreach (KeyValuePair<string, int> entry in TermFrequencies)
         {
-            double tfValue = entry.Value > 0 ? 1.0 + Math.Log(entry.Value) : 0.0;
-            double idfValue = idf.ContainsKey(entry.Key) ? idf[entry.Key] : Math.Log(n / 1d);
+            if (entry.Value == 0 || !idf.ContainsKey(entry.Key))
+            {
+                continue;
+            }
+
+            double tfValue = (Math.Log(entry.Value) + 1d) / count;
+            double idfValue = idf[entry.Key];
 
             results[entry.Key] = tfValue * idfValue;
         }
 
         _tfidf = results;
-        _n = n;
         _idf = idf;
 
         return _tfidf;
@@ -69,6 +86,8 @@ internal static partial class Program
     private static readonly HashSet<string> stopWords =
         new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
+            // Professor's stop-list
+            
             "a", "the", "an", "and", "or", "but", "about", "above", "after",
             "along", "amid", "among", "as", "at", "by", "for", "from", "in",
             "into", "like", "minus", "near", "of", "off", "on",
@@ -91,8 +110,13 @@ internal static partial class Program
             "whenever", "wherever", "whichever", "whoever", "whomever", "he",
             "him", "his", "her", "she", "it", "they", "them", "its", "their",
             "theirs", "you", "your", "yours", "me", "my", "mine", "I", "we", "us",
-            "much", "and/or"
+            "much", "and/or",
+
+            // NLTK's English stop-list
+
+            "a", "about", "above", "after", "again", "against", "ain", "all", "am", "an", "and", "any", "are", "aren", "aren't", "as", "at", "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "can", "couldn", "couldn't", "d", "did", "didn", "didn't", "do", "does", "doesn", "doesn't", "doing", "don", "don't", "down", "during", "each", "few", "for", "from", "further", "had", "hadn", "hadn't", "has", "hasn", "hasn't", "have", "haven", "haven't", "having", "he", "he'd", "he'll", "her", "here", "hers", "herself", "he's", "him", "himself", "his", "how", "i", "i'd", "if", "i'll", "i'm", "in", "into", "is", "isn", "isn't", "it", "it'd", "it'll", "it's", "its", "itself", "i've", "just", "ll", "m", "ma", "me", "mightn", "mightn't", "more", "most", "mustn", "mustn't", "my", "myself", "needn", "needn't", "no", "nor", "not", "now", "o", "of", "off", "on", "once", "only", "or", "other", "our", "ours", "ourselves", "out", "over", "own", "re", "s", "same", "shan", "shan't", "she", "she'd", "she'll", "she's", "should", "shouldn", "shouldn't", "should've", "so", "some", "such", "t", "than", "that", "that'll", "the", "their", "theirs", "them", "themselves", "then", "there", "these", "they", "they'd", "they'll", "they're", "they've", "this", "those", "through", "to", "too", "under", "until", "up", "ve", "very", "was", "wasn", "wasn't", "we", "we'd", "we'll", "we're", "were", "weren", "weren't", "we've", "what", "when", "where", "which", "while", "who", "whom", "why", "will", "with", "won", "won't", "wouldn", "wouldn't", "y", "you", "you'd", "you'll", "your", "you're", "yours", "yourself", "yourselves", "you've"
         };
+    private static readonly EnglishPorter2Stemmer stemmer = new EnglishPorter2Stemmer();
 
     [GeneratedRegex(@"[A-Za-z]+", RegexOptions.IgnoreCase)]
     private static partial Regex TokenRegex();
@@ -122,14 +146,14 @@ internal static partial class Program
         for (int i = 0; i < queries.Count; i++)
         {
             IReadOnlyDictionary<string, double> queryVector =
-                queries[i].GetOrComputeTfidf(queries.Count, queryIdf);
+                queries[i].GetOrComputeTfidf(queryIdf);
             double normalizedQuery = Math.Sqrt(queryVector.Sum(x => x.Value * x.Value));
             List<(int articleId, double score)> results = new List<(int articleId, double score)>();
 
             for (int j = 0; j < articles.Count; ++j)
             {
                 IReadOnlyDictionary<string, double> articleVector =
-                    articles[j].GetOrComputeTfidf(articles.Count, articleIdf);
+                    articles[j].GetOrComputeTfidf(articleIdf);
 
                 results.Add((j + 1, CosSimilarity(normalizedQuery, articleVector, queryVector)));
             }
@@ -159,6 +183,7 @@ internal static partial class Program
         string? line;
         char section = '\0';
         int id = 0;
+        StringBuilder titleBuilder = new StringBuilder();
         StringBuilder abstractBuilder = new StringBuilder();
         List<Document> results = new List<Document>();
 
@@ -188,9 +213,13 @@ internal static partial class Program
             switch (section)
             {
                 case 'I':
-                    RealizeDocument(ref id, abstractBuilder, results);
+                    RealizeDocument(ref id, titleBuilder, abstractBuilder, results);
 
                     id = int.Parse(line);
+                    break;
+
+                case 'T':
+                    titleBuilder.AppendLine(line);
                     break;
 
                 case 'W':
@@ -199,13 +228,14 @@ internal static partial class Program
             }
         }
 
-        RealizeDocument(ref id, abstractBuilder, results);
+        RealizeDocument(ref id, titleBuilder, abstractBuilder, results);
 
         return results;
     }
 
     private static void RealizeDocument(
         ref int id,
+        StringBuilder titleBuilder,
         StringBuilder summaryBuilder,
         List<Document> documents)
     {
@@ -216,14 +246,22 @@ internal static partial class Program
 
         id = 0;
 
-        List<string> tokens = TokenRegex()
-            .Matches(summaryBuilder.ToString())
+        List<string> titleTokens = Tokenize(titleBuilder.ToString());
+        List<string> summaryTokens = Tokenize(summaryBuilder.ToString());
+
+        documents.Add(new Document(titleTokens, summaryTokens));
+        titleBuilder.Clear();
+        summaryBuilder.Clear();
+    }
+
+    private static List<string> Tokenize(string value)
+    {
+        return TokenRegex()
+            .Matches(value)
             .Select(x => x.Value)
             .Where(x => x.Length > 0 && !stopWords.Contains(x))
+            .Select(x => stemmer.Stem(x).Value)
             .ToList();
-
-        documents.Add(new Document(tokens));
-        summaryBuilder.Clear();
     }
 
     private static Dictionary<string, double> GetIdf(IReadOnlyCollection<Document> documents)
@@ -241,7 +279,7 @@ internal static partial class Program
 
         foreach (KeyValuePair<string, double> entry in results)
         {
-            results[entry.Key] = Math.Log(documents.Count / (entry.Value + 1));
+            results[entry.Key] = Math.Log((documents.Count + 1) / (entry.Value + 1)) + 1;
         }
 
         return results;

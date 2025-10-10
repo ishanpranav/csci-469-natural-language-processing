@@ -32,8 +32,7 @@ cat WSJ_23.words > words_file.words
 
 ### Implementation
 
-This program is implemented in C\# on the .NET framework. I developed it in
-five stages:
+This program is implemented in C\#/.NET. I developed it in five stages:
 
 1. parsing and summarizing the training data;
 2. implementing and testing Viterbi's algorithm;
@@ -115,6 +114,25 @@ $k$, the last $k$-letters of the word are compared against the suffix set. If
 there is a match, the tagger classifies it alongside other unknown words with
 the same suffix. The suffix classification is combined with the "shape"
 attributes to produce many combinations of unknown word classes.
+
+## Information retrieval
+
+This is a TF-IDF information retrieval system.
+
+### Usage
+
+```sh
+./NaturalLanguageProcessing.InformationRetrieval cran.all.1400 cran.qry
+```
+
+#### Tokenization
+
+Documents and queries are tokenized using a simple regular expression
+(`[A-Za-z]+`).
+
+#### Stemming
+
+English stemming is provided by the `Porter2Stemmer (1.0.0)` library.
 
 ## License
 
