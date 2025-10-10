@@ -27,7 +27,7 @@ program.
 ```sh
 cat WSJ_02-21.pos WSJ_24.pos > pos_file.pos
 cat WSJ_23.words > words_file.words
-./NaturalLanguageProcessing.ViterbiTagger pos_file.pos words_file.words > submission.pos
+./NaturalLanguageProcessing.ViterbiTagger pos_file.pos words_file.words
 ```
 
 ### Implementation
