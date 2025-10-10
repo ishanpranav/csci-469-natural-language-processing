@@ -132,7 +132,7 @@ Documents and queries are tokenized using a simple regular expression
 
 #### Stemming
 
-English stemming is provided by the `Porter2Stemmer (1.0.0)` library.
+English stemming is provided by the `Porter2Stemmer` (1.0.0) library.
 
 ## License
 
