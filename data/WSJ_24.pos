@@ -1,3 +1,4 @@
+
 The	DT
 economy	NN
 's	POS
@@ -1131,7 +1132,7 @@ nearly	RB
 worthless	JJ
 Japanese	JJ
 bonds	NNS
-(	(
+-LRB-	-LRB-
 since	IN
 when	WRB
 is	VBZ
@@ -1141,7 +1142,7 @@ nearly	RB
 worthless	JJ
 nowadays	RB
 ?	.
-)	)
+-RRB-	-RRB-
 .	.
 
 Surprisingly	RB
@@ -1566,11 +1567,11 @@ inconsiderable	JJ
 #	#
 8	CD
 million	CD
-(	(
+-LRB-	-LRB-
 $	$
 12.4	CD
 million	CD
-)	)
+-RRB-	-RRB-
 ,	,
 and	CC
 would	MD
@@ -1842,9 +1843,9 @@ Conreid	NNP
 and	CC
 Douglas	NNP
 Hodge	NNP
-(	(
+-LRB-	-LRB-
 Declan	NNP
-)	)
+-RRB-	-RRB-
 for	IN
 James	NNP
 Farentino	NNP
@@ -2482,11 +2483,11 @@ initial	JJ
 #	#
 13.35	CD
 billion	CD
-(	(
+-LRB-	-LRB-
 $	$
 20.71	CD
 billion	CD
-)	)
+-RRB-	-RRB-
 takeover	NN
 bid	NN
 after	IN
@@ -3727,9 +3728,9 @@ Budapest	NNP
 ``	``
 The	DT
 Hungarian	NNP
-{	(
+-LCB-	-LRB-
 radio	NN
-}	)
+-RCB-	-RRB-
 reporters	NNS
 seem	VBP
 better	RB
@@ -4134,7 +4135,7 @@ intimidation	NN
 of	IN
 local	JJ
 correspondents	NNS
-(	(
+-LRB-	-LRB-
 who	WP
 filed	VBD
 reports	NNS
@@ -4148,7 +4149,7 @@ secret	JJ
 messengers	NNS
 or	CC
 letters	NNS
-)	)
+-RRB-	-RRB-
 .	.
 
 In	IN
@@ -5369,7 +5370,7 @@ project	NN
 for	IN
 educational	JJ
 aid	NN
-(	(
+-LRB-	-LRB-
 particularly	RB
 satisfying	VBG
 to	TO
@@ -5379,7 +5380,7 @@ and	CC
 Sen.	NNP
 Sam	NNP
 Nunn	NNP
-)	)
+-RRB-	-RRB-
 ,	,
 a	DT
 similar	JJ
@@ -5388,13 +5389,13 @@ program	NN
 for	IN
 youth	NN
 conservation	NN
-(	(
+-LRB-	-LRB-
 a	FW
 la	FW
 Sen.	NNP
 Chris	NNP
 Dodd	NNP
-)	)
+-RRB-	-RRB-
 ,	,
 a	DT
 competitive	JJ
@@ -5410,11 +5411,11 @@ senior	JJ
 citizen	NN
 volunteer	NN
 projects	NNS
-(	(
+-LRB-	-LRB-
 a	DT
 Kennedy	NNP
 specialty	NN
-)	)
+-RRB-	-RRB-
 ,	,
 a	DT
 community	NN
@@ -5423,7 +5424,7 @@ work-study	NN
 program	NN
 for	IN
 students	NNS
-(	(
+-LRB-	-LRB-
 pleasing	JJ
 to	TO
 the	DT
@@ -5435,7 +5436,7 @@ Bumpers	NNP
 ,	,
 among	IN
 others	NNS
-)	)
+-RRB-	-RRB-
 ,	,
 plus	CC
 engorgement	NN
@@ -5619,11 +5620,11 @@ have	VBP
 risen	VBN
 30	CD
 %	NN
-(	(
+-LRB-	-LRB-
 adjusted	VBN
 for	IN
 inflation	NN
-)	)
+-RRB-	-RRB-
 .	.
 
 Even	RB
@@ -6434,11 +6435,11 @@ about	IN
 billion	CD
 Canadian	JJ
 dollars	NNS
-(	(
+-LRB-	-LRB-
 US$	$
 35.2	CD
 billion	CD
-)	)
+-RRB-	-RRB-
 of	IN
 such	JJ
 bonds	NNS
@@ -6550,21 +6551,21 @@ by	IN
 Sen.	NNP
 Sam	NNP
 Nunn	NNP
-(	(
+-LRB-	-LRB-
 D.	NNP
 ,	,
 Ga	NNP
 .	.
-)	)
+-RRB-	-RRB-
 and	CC
 Rep.	NNP
 Dave	NNP
 McCurdy	NNP
-(	(
+-LRB-	-LRB-
 D.	NNP
 ,	,
 Okla.	NNP
-)	)
+-RRB-	-RRB-
 ,	,
 would	MD
 have	VB
@@ -6587,11 +6588,11 @@ by	IN
 Sen.	NNP
 Edward	NNP
 Kennedy	NNP
-(	(
+-LRB-	-LRB-
 D.	NNP
 ,	,
 Mass.	NNP
-)	)
+-RRB-	-RRB-
 ,	,
 and	CC
 including	VBG
@@ -6643,9 +6644,9 @@ own	JJ
 Youth	NNP
 Entering	NNP
 Service	NNP
-(	(
+-LRB-	-LRB-
 YES	NNP
-)	)
+-RRB-	-RRB-
 plan	NN
 ,	,
 though	IN
@@ -7209,7 +7210,7 @@ and	CC
 unenforceable	JJ
 .	.
 
-(	(
+-LRB-	-LRB-
 Who	WP
 will	MD
 throw	VB
@@ -7222,7 +7223,7 @@ jail	NN
 each	DT
 year	NN
 ?	.
-)	)
+-RRB-	-RRB-
 
 But	CC
 through	IN
@@ -7746,10 +7747,10 @@ begin	VBP
 to	TO
 respect	VB
 themselves	PRP
-(	(
+-LRB-	-LRB-
 and	CC
 others	NNS
-)	)
+-RRB-	-RRB-
 ,	,
 to	TO
 take	VB
@@ -7820,12 +7821,12 @@ Mean	VB
 ?	.
 ''	''
 
-(	(
+-LRB-	-LRB-
 Lexington	NNP
 Books	NNPS
 ,	,
 1986	CD
-)	)
+-RRB-	-RRB-
 .	.
 
 Government	NNP
@@ -10168,7 +10169,7 @@ Co.	NNP
 recommends	VBZ
 Treasury	NN
 securities	NNS
-(	(
+-LRB-	-LRB-
 of	IN
 up	IN
 to	TO
@@ -10176,7 +10177,7 @@ five	CD
 years	NNS
 '	POS
 maturity	NN
-)	)
+-RRB-	-RRB-
 .	.
 
 He	PRP
@@ -10252,30 +10253,30 @@ its	PRP$
 holder	NN
 the	DT
 right	RB
-(	(
+-LRB-	-LRB-
 but	CC
 not	RB
 the	DT
 obligation	NN
-)	)
+-RRB-	-RRB-
 to	TO
 sell	VB
 a	DT
 stock	NN
-(	(
+-LRB-	-LRB-
 or	CC
 stock	NN
 index	NN
-)	)
+-RRB-	-RRB-
 for	IN
 a	DT
 specified	VBN
 price	NN
-(	(
+-LRB-	-LRB-
 the	DT
 strike	NN
 price	NN
-)	)
+-RRB-	-RRB-
 until	IN
 the	DT
 option	NN
@@ -12169,7 +12170,7 @@ futures	NNS
 fall	VBP
 12	CD
 points	NNS
-(	(
+-LRB-	-LRB-
 equivalent	NN
 to	TO
 about	IN
@@ -12177,7 +12178,7 @@ about	IN
 points	NNS
 on	IN
 DJIA	NNP
-)	)
+-RRB-	-RRB-
 ,	,
 trading	NN
 is	VBZ
@@ -12289,10 +12290,10 @@ Brady	NNP
 Task	NNP
 Force	NNP
 recommendations	NNS
-(	(
+-LRB-	-LRB-
 Jan.	NNP
 1988	CD
-)	)
+-RRB-	-RRB-
 :	:
 
 --	:
@@ -12321,10 +12322,10 @@ markets	NNS
 
 SEC	NNP
 proposals	NNS
-(	(
+-LRB-	-LRB-
 May	NNP
 1988	CD
-)	)
+-RRB-	-RRB-
 :	:
 
 --	:
@@ -12363,13 +12364,13 @@ from	IN
 CFTC	NNP
 .	.
 
-(	(
+-LRB-	-LRB-
 Opposed	VBN
 by	IN
 new	JJ
 SEC	NNP
 chairman	NN
-)	)
+-RRB-	-RRB-
 
 --	:
 Give	VB
@@ -12380,14 +12381,14 @@ halt	VB
 securities	NNS
 trading	NN
 ,	,
-(	(
+-LRB-	-LRB-
 also	RB
 opposed	VBN
 by	IN
 new	JJ
 SEC	NNP
 chairman	NN
-)	)
+-RRB-	-RRB-
 .	.
 
 Congressional	JJ
@@ -12743,11 +12744,11 @@ totaling	VBG
 8	CD
 million	CD
 yen	NN
-(	(
+-LRB-	-LRB-
 about	IN
 $	$
 55,000	CD
-)	)
+-RRB-	-RRB-
 but	CC
 said	VBD
 the	DT
@@ -12974,18 +12975,18 @@ Labor	NNP
 gets	VBZ
 25	CD
 pence	NN
-(	(
+-LRB-	-LRB-
 39	CD
 cents	NNS
-)	)
+-RRB-	-RRB-
 for	IN
 every	DT
 100	CD
-(	(
+-LRB-	-LRB-
 about	IN
 $	$
 155	CD
-)	)
+-RRB-	-RRB-
 that	IN
 a	DT
 user	NN
@@ -13017,14 +13018,14 @@ Bank	NNP
 carries	VBZ
 a	DT
 stiff	JJ
-(	(
+-LRB-	-LRB-
 in	IN
 this	DT
 case	NN
 ,	,
 29.8	CD
 %	NN
-)	)
+-RRB-	-RRB-
 annual	JJ
 rate	NN
 on	IN
@@ -13112,11 +13113,11 @@ than	IN
 1	CD
 billion	CD
 yuan	NN
-(	(
+-LRB-	-LRB-
 $	$
 270	CD
 million	CD
-)	)
+-RRB-	-RRB-
 was	VBD
 spent	VBN
 in	IN
@@ -13591,7 +13592,7 @@ business	NN
 
 His	PRP$
 company	NN
-(	(
+-LRB-	-LRB-
 annual	JJ
 sales	NNS
 :	:
@@ -13599,7 +13600,7 @@ about	IN
 $	$
 25	CD
 million	CD
-)	)
+-RRB-	-RRB-
 may	MD
 suffer	VB
 a	DT
@@ -13617,7 +13618,7 @@ sales	NNS
 --	:
 if	IN
 Sony	NNP
-(	(
+-LRB-	-LRB-
 annual	JJ
 sales	NNS
 :	:
@@ -13625,7 +13626,7 @@ about	IN
 $	$
 16	CD
 billion	CD
-)	)
+-RRB-	-RRB-
 prevails	VBZ
 .	.
 
@@ -13759,14 +13760,14 @@ Rubik	NNP
 Cube	NNP
 .	.
 
-(	(
+-LRB-	-LRB-
 Sony	NNP
 itself	PRP
 declines	VBZ
 to	TO
 comment	VB
 .	.
-)	)
+-RRB-	-RRB-
 
 If	IN
 Sony	NNP
@@ -14122,7 +14123,7 @@ adult	NN
 models	NNS
 .	.
 
-(	(
+-LRB-	-LRB-
 In	IN
 court	NN
 papers	NNS
@@ -14151,7 +14152,7 @@ a	DT
 million	CD
 units	NNS
 .	.
-)	)
+-RRB-	-RRB-
 
 Sony	NNP
 found	VBD
@@ -14228,7 +14229,7 @@ these	DT
 colors	NNS
 .	.
 
-(	(
+-LRB-	-LRB-
 ``	``
 To	NN
 be	VB
@@ -14260,7 +14261,7 @@ Justin	NNP
 's	POS
 attorney	NN
 .	.
-)	)
+-RRB-	-RRB-
 
 By	IN
 last	JJ
@@ -14349,7 +14350,7 @@ n't	RB
 pursued	VBN
 those	DT
 charges	NNS
-(	(
+-LRB-	-LRB-
 which	WDT
 were	VBD
 without	IN
@@ -14363,7 +14364,7 @@ Eslinger	NNP
 the	DT
 Sony	NNP
 attorney	NN
-)	)
+-RRB-	-RRB-
 .	.
 
 Recalls	VBZ
@@ -14527,7 +14528,7 @@ products	NNS
 distinctive	JJ
 .	.
 
-(	(
+-LRB-	-LRB-
 Justin	NNP
 claims	VBZ
 it	PRP
@@ -14550,7 +14551,7 @@ children	NNS
 's	POS
 market	NN
 .	.
-)	)
+-RRB-	-RRB-
 
 Whatever	WDT
 its	PRP$
@@ -14835,10 +14836,10 @@ capital	NN
 for	IN
 1,015	CD
 francs	NNS
-(	(
+-LRB-	-LRB-
 $	$
 156.82	CD
-)	)
+-RRB-	-RRB-
 a	DT
 share	NN
 .	.
@@ -14855,11 +14856,11 @@ of	IN
 528	CD
 million	CD
 francs	NNS
-(	(
+-LRB-	-LRB-
 $	$
 81.6	CD
 million	CD
-)	)
+-RRB-	-RRB-
 on	IN
 the	DT
 32.99	CD
@@ -16937,13 +16938,13 @@ any	DT
 fundamental	JJ
 economic	JJ
 rationale	NN
-{	(
+-LCB-	-LRB-
 for	IN
 the	DT
 junk	NN
 bond	NN
 rout	NN
-}	)
+-RCB-	-RRB-
 .	.
 
 It	PRP
@@ -18447,7 +18448,7 @@ tax	NN
 on	IN
 any	DT
 profits	NNS
-(	(
+-LRB-	-LRB-
 all	PDT
 the	DT
 more	RBR
@@ -18468,7 +18469,7 @@ not	RB
 ordinary	JJ
 income	NN
 ''	''
-)	)
+-RRB-	-RRB-
 .	.
 
 And	CC
@@ -19455,12 +19456,12 @@ was	VBD
 plain	JJ
 :	:
 PASOK	NNP
-(	(
+-LRB-	-LRB-
 Mr.	NNP
 Papandreou	NNP
 's	POS
 party	NN
-)	)
+-RRB-	-RRB-
 as	IN
 common	JJ
 political	JJ
@@ -19934,10 +19935,10 @@ disclosures	NNS
 of	IN
 sums	NNS
 paid	VBN
-(	(
+-LRB-	-LRB-
 or	CC
 not	RB
-)	)
+-RRB-	-RRB-
 to	TO
 various	JJ
 Greek	JJ
@@ -22683,11 +22684,11 @@ completed	VBN
 a	DT
 100	CD
 million-mark	JJ
-(	(
+-LRB-	-LRB-
 $	$
 52.2	CD
 million	CD
-)	)
+-RRB-	-RRB-
 joint	JJ
 venture	NN
 to	TO
@@ -23122,11 +23123,11 @@ to	TO
 839	CD
 million	CD
 francs	NNS
-(	(
+-LRB-	-LRB-
 $	$
 129.6	CD
 million	CD
-)	)
+-RRB-	-RRB-
 in	IN
 the	DT
 first	JJ
@@ -24580,11 +24581,11 @@ of	IN
 million	CD
 Canadian	JJ
 dollars	NNS
-(	(
+-LRB-	-LRB-
 US$	$
 255	CD
 million	CD
-)	)
+-RRB-	-RRB-
 .	.
 
 Don	NNP
@@ -27422,13 +27423,13 @@ between	IN
 1983	CD
 and	CC
 1987	CD
-(	(
+-LRB-	-LRB-
 the	DT
 most	RBS
 recent	JJ
 year	NN
 available	JJ
-)	)
+-RRB-	-RRB-
 .	.
 
 The	DT
@@ -27747,9 +27748,9 @@ should	MD
 take	VB
 a	DT
 short-term	JJ
-(	(
+-LRB-	-LRB-
 three-year	JJ
-)	)
+-RRB-	-RRB-
 lease	NN
 and	CC
 wait	VB
@@ -29488,11 +29489,11 @@ to	TO
 HK$	$
 10.05	CD
 billion	CD
-(	(
+-LRB-	-LRB-
 US$	$
 1.29	CD
 billion	CD
-)	)
+-RRB-	-RRB-
 .	.
 
 But	CC
@@ -31668,7 +31669,7 @@ enterprises	NNS
 .	.
 
 ''	''
-(	(
+-LRB-	-LRB-
 He	PRP
 did	VBD
 n't	RB
@@ -32319,9 +32320,9 @@ Rep.	NNP
 Edward	NNP
 J.	NNP
 Markey	NNP
-(	(
+-LRB-	-LRB-
 D-Mass.	NNP
-)	)
+-RRB-	-RRB-
 ,	,
 who	WP
 heads	VBZ

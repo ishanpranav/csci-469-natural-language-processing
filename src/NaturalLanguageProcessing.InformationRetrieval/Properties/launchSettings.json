@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "NaturalLanguageProcessing.InformationRetrieval": {
-      "commandName": "Project",
-      "commandLineArgs": "\"C:\\Users\\ishan\\source\\Repos\\viterbi-hmm-pos-tagger\\data\\cran.all.1400\" \"C:\\Users\\ishan\\source\\Repos\\viterbi-hmm-pos-tagger\\data\\cran.qry\""
-    }
-  }
-}
