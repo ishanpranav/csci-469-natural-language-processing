@@ -9,4 +9,4 @@ dotnet run
 MkDir ..\submission
 Copy Program.cs ..\submission\Program.cs
 Copy output.txt ..\submission\output.txt
-ChDir
+ChDir ..\..\test

@@ -12,4 +12,4 @@ MkDir ..\submission
 Copy Program.cs ..\submission\ihp2012_HW3_Program.cs
 Copy submission.pos ..\submission\submission.pos
 Copy ..\..\README.md ..\submission\ihp2012_HW3_README.txt
-ChDir
+ChDir ..\..\test

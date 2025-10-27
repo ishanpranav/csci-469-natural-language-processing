@@ -421,4 +421,6 @@ FodyWeavers.xsd
 
 submission.pos
 submission/
+*.class
 *.jar
+*.feature
