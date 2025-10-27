@@ -2,15 +2,25 @@
 // Copyright (c) 2025 Ishan Pranav
 // Licensed under the MIT license.
 
+using Porter2Stemmer;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
+using System.Reflection.Metadata.Ecma335;
 
 namespace NaturalLanguageProcessing.NounGroupTagger;
+
+[Flags]
+internal enum Features
+{
+    None = 0,
+    Upper = 1,
+    Lower = 2,
+    Hyphenated = 4,
+    Numeral = 8
+}
 
 internal sealed class Token
 {
@@ -30,6 +40,7 @@ internal static class Program
     private static readonly string[] delimiters = { "\t", " " };
     private static readonly List<IReadOnlyList<Token>> sentences =
         new List<IReadOnlyList<Token>>();
+    private static readonly EnglishPorter2Stemmer stemmer = new EnglishPorter2Stemmer();
 
     private static void Main(string[] args)
     {
@@ -98,8 +109,8 @@ internal static class Program
             }
 
             sentence.Add(new Token(
-                word: segments[0], 
-                pos: segments[1], 
+                word: segments[0],
+                pos: segments[1],
                 bio: segments.Length > 2 ? segments[2] : null));
         }
 
@@ -120,21 +131,100 @@ internal static class Program
 
     private static IEnumerable<List<string>> GenerateFeatures(IReadOnlyList<Token> sentence)
     {
+        List<string>[] baseFeatures = new List<string>[sentence.Count];
+        List<string>[] features = new List<string>[sentence.Count];
+
         for (int i = 0; i < sentence.Count; i++)
         {
-            Token token = sentence[i];
-            List<string> features = new List<string>()
-            {
-                token.Word,
-                $"pos={token.Pos}"
-            };
+            baseFeatures[i] = new List<string>();
+            features[i] = new List<string>() { sentence[i].Word };
 
-            if (token.Bio != null)
+            AddFeatures(baseFeatures[i], sentence[i]);
+            features[i].AddRange(baseFeatures[i]);
+        }
+
+        for (int i = 1; i < sentence.Count - 1; i++)
+        {
+            AddFeaturesWithPrefix(features[i - 1], baseFeatures[i], "previous__");
+        }
+
+        for (int i = 0; i < sentence.Count; i++)
+        {
+            if (sentence[i].Bio != null)
             {
-                features.Add(token.Bio);
+                features[i].Add(sentence[i].Bio!);
+            }
+        }
+
+        return features;
+    }
+
+    private static void AddFeaturesWithPrefix(
+        List<string> results, 
+        List<string> features, 
+        string prefix)
+    {
+        foreach (string feature in features)
+        {
+            results.Add($"{prefix}__{feature}");
+        }
+    }
+
+    private static void AddFeatures(List<string> results, Token token)
+    {
+        results.Add($"word={token.Word}");
+        results.Add($"pos={token.Pos}");
+        results.Add($"first_upper={char.IsUpper(token.Word[0])}");
+        results.Add($"length={token.Word.Length}");
+        results.Add($"stem={stemmer.Stem(token.Word).Value}");
+
+        Features features = GetFeatures(token.Word);
+
+        for (int flag = 1; flag <= (1 << 31); flag <<= 1)
+        {
+            if ((features & (Features)flag) != 0)
+            {
+                results.Add(((Features)flag).ToString());
+            }
+        }
+
+        if (token.Bio != null)
+        {
+            results.Add($"bio={token.Bio}");
+        }
+    }
+
+    private static Features GetFeatures(string word)
+    {
+        Features result = Features.None;
+
+        for (int i = 0; i < word.Length; i++)
+        {
+            char symbol = word[i];
+
+            if (char.IsUpper(symbol))
+            {
+                result |= Features.Upper;
             }
 
-            yield return features;
+            if (i > 0 && char.IsLower(symbol))
+            {
+                result |= Features.Lower;
+            }
+
+            if (char.IsDigit(symbol))
+            {
+                result |= Features.Numeral;
+            }
+
+            switch (symbol)
+            {
+                case '-':
+                    result |= Features.Hyphenated;
+                    break;
+            }
         }
+
+        return result;
     }
 }

@@ -16,7 +16,7 @@ using System.Linq;
 namespace NaturalLanguageProcessing.ViterbiTagger;
 
 [Flags]
-internal enum Kinds
+internal enum Features
 {
     None = 0,
     Upper = 1,
@@ -176,7 +176,7 @@ internal static class Program
 
     private static string TagUnknown(string word)
     {
-        Kinds kinds = Kinds.None;
+        Features features = Features.None;
 
         for (int i = 0; i < word.Length; i++)
         {
@@ -184,30 +184,30 @@ internal static class Program
 
             if (char.IsUpper(symbol))
             {
-                kinds |= Kinds.Upper;
+                features |= Features.Upper;
             }
 
             if (i > 0 && char.IsLower(symbol))
             {
-                kinds |= Kinds.Lower;
+                features |= Features.Lower;
             }
 
             if (char.IsDigit(symbol))
             {
-                kinds |= Kinds.Numeral;
+                features |= Features.Numeral;
             }
 
             switch (symbol)
             {
                 case '-':
-                    kinds |= Kinds.Hyphenated;
+                    features |= Features.Hyphenated;
                     break;
             }
         }
 
         return string.Format(
             "Unknown_Word[{0},{1}]",
-            (int)kinds,
+            (int)features,
             GetSuffix(word) ?? string.Empty);
     }
 
