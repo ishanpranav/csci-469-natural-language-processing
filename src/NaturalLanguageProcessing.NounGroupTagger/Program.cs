@@ -143,9 +143,24 @@ internal static class Program
             features[i].AddRange(baseFeatures[i]);
         }
 
-        for (int i = 1; i < sentence.Count - 1; i++)
+        for (int i = 1; i < sentence.Count; i++)
         {
-            AddFeaturesWithPrefix(features[i - 1], baseFeatures[i], "previous__");
+            AddFeaturesWithPrefix(features[i], baseFeatures[i - 1], "previous__");
+        }
+
+        for (int i = 2; i < sentence.Count; i++)
+        {
+            AddFeaturesWithPrefix(features[i], baseFeatures[i - 2], "previous_previous__");
+        }
+
+        for (int i = 0; i < sentence.Count - 1; i++)
+        {
+            AddFeaturesWithPrefix(features[i], baseFeatures[i + 1], "next__");
+        }
+
+        for (int i = 0; i < sentence.Count - 2; i++)
+        {
+            AddFeaturesWithPrefix(features[i], baseFeatures[i + 2], "next_next__");
         }
 
         for (int i = 0; i < sentence.Count; i++)
@@ -160,8 +175,8 @@ internal static class Program
     }
 
     private static void AddFeaturesWithPrefix(
-        List<string> results, 
-        List<string> features, 
+        List<string> results,
+        List<string> features,
         string prefix)
     {
         foreach (string feature in features)
@@ -174,6 +189,7 @@ internal static class Program
     {
         results.Add($"word={token.Word}");
         results.Add($"pos={token.Pos}");
+        results.Add($"previous_bio=@@");
         results.Add($"first_upper={char.IsUpper(token.Word[0])}");
         results.Add($"length={token.Word.Length}");
         results.Add($"stem={stemmer.Stem(token.Word).Value}");
