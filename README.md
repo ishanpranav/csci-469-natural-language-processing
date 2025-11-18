@@ -138,6 +138,69 @@ Documents and queries are tokenized using a simple regular expression
 
 English stemming is provided by the `Porter2Stemmer` (1.0.0) library.
 
+## Noun group tagging
+
+This is a noun group tagger implemented in C\#/.NET. We focus on the feature
+detection component and outsource the actual tagging to the Java MaxEnt
+library.
+
+### Usage
+
+```sh
+ChDir ..\src\NaturalLanguageProcessing.NounGroupTagger
+
+dotnet run ..\..\data\WSJ_02-21.pos-chunk ..\..\test\training.feature
+dotnet run ..\..\data\WSJ_24.pos-chunk ..\..\test\test.feature
+
+ChDir ..\..\test
+
+javac -cp maxent-3.0.0.jar;trove.jar *.java
+java -cp .;maxent-3.0.0.jar;trove.jar -Xmx16g MEtrain training.feature model.chunk
+java -cp .;maxent-3.0.0.jar;trove.jar -Xmx16g MEtag test.feature model.chunk response.chunk
+python3 score.chunk.py ..\data\WSJ_24.pos-chunk response.chunk
+
+ChDir ..\src\NaturalLanguageProcessing.NounGroupTagger
+
+dotnet run ..\..\data\WSJ_23.pos ..\..\test\test.feature
+
+ChDir ..\..\test
+
+java -cp .;maxent-3.0.0.jar;trove.jar -Xmx16g MEtag test.feature model.chunk WSJ_23.chunk
+```
+
+### Features
+
+- Word features
+	- Word
+	- Part of speech tag
+	- Word-part-of-speech-tag pair
+	- Word length
+	- Word stem
+- Shape features
+	- All uppercase
+	- First uppercase
+	- Any uppercase
+	- Shape template
+	- Compressed shape template
+	- First K characters, 2-4
+	- Last K characters, 2-4
+- Neighbor features
+	- Previous word and part of speech tag
+	- Previous previous word and part of speech tag
+	- Next word and part of speech tag
+	- Next next word nd part of speech tag
+- N-grams
+	- Bigram, left and right
+	- Trigram
+	- Fourgram, left and right
+	- Fivegram
+- Parts of speech, current and previous
+	- Verb
+	- Noun
+	- Adjective
+	- Preposition
+	- Determiner
+
 ## License
 
 This repository is licensed with the [MIT](LICENSE.txt) license.

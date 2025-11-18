@@ -131,9 +131,19 @@ internal static class Program
         sentence = new List<Token>();
     }
 
-    private static IEnumerable<List<string>> GenerateFeatures(IReadOnlyList<Token> sentence)
+    private static IEnumerable<List<string>> GenerateFeatures(IReadOnlyList<Token> tokens)
     {
-        for (int i = 0; i < sentence.Count; i++)
+        List<Token> sentence = new List<Token>()
+        {
+            new Token(SentenceStart + "-2", SentenceStart + "-2", "O"),
+            new Token(SentenceStart + "-1", SentenceStart + "-1", "O")
+        };
+
+        sentence.AddRange(tokens);
+        sentence.Add(new Token(SentenceEnd + "+1", SentenceEnd + "+1", "O"));
+        sentence.Add(new Token(SentenceEnd + "+2", SentenceEnd + "+2", "O"));
+
+        for (int i = 2; i < sentence.Count - 2; i++)
         {
             Token token = sentence[i];
             List<string> features = new List<string>()
@@ -142,13 +152,28 @@ internal static class Program
                 $"word={token.Word}",
                 $"pos={token.Pos}",
                 $"word_pos={token.Word}_{token.Pos}",
-                $"index={i}",
                 $"length={token.Word.Length}",
                 $"stem={stemmer.Stem(token.Word).Value}",
-                $"relative_index={(double)i / sentence.Count:p0}",
                 $"all_upper={token.Word.All(char.IsUpper)}",
                 $"first_upper={char.IsUpper(token.Word[0])}",
-                "wildcard_bio=@@"
+                "wildcard_bio=@@",
+                $"previous_previous_word={sentence[i - 2].Word}",
+                $"previous_previous_pos-{sentence[i - 2].Pos}",
+                $"next_word={sentence[i + 1].Word}",
+                $"next_pos={sentence[i + 1].Pos}",
+                $"next_word_pos={sentence[i + 1].Word}_{token.Pos}",
+                $"next_next_word={sentence[i + 2].Word}",
+                $"next_next_pos={sentence[i + 2].Pos}",
+                $"bigram_left={sentence[i - 1].Pos}_{token.Pos}",
+                $"bigram_left={token.Pos}_{sentence[i + 1].Pos}",
+                $"trigram={sentence[i - 1].Pos}_{token.Pos}_{sentence[i + 1].Pos}",
+                $"fourgram_left={sentence[i - 2].Pos}_{sentence[i - 1].Pos}_{token.Pos}_{sentence[i + 1].Pos}",
+                $"fourgram_right={sentence[i - 1].Pos}_{token.Pos}_{sentence[i + 1].Pos}_{sentence[i + 2].Pos}",
+                $"fivegram={sentence[i - 2].Pos}_{sentence[i - 1].Pos}_{token.Pos}_{sentence[i + 1].Pos}_{sentence[i + 2].Pos}",
+                $"previous_word={sentence[i - 1].Word}",
+                $"previous_pos-{sentence[i - 1].Pos}",
+                $"previous_bio={sentence[i - 1].Bio ?? "O"}",
+                $"previous_word_pos={sentence[i - 1].Word}_{token.Pos}",
             };
 
             if (token.Pos.StartsWith("VB"))
@@ -168,129 +193,37 @@ internal static class Program
 
             if (sentence[i].Pos == "IN" || sentence[i].Pos == "TO")
             {
-                features.Add("previous_preposition");
+                features.Add("preposition");
             }
 
             if (sentence[i].Pos.EndsWith("DT"))
             {
+                features.Add("determiner");
+            }
+
+            if (sentence[i - 1].Pos.StartsWith("VB"))
+            {
+                features.Add("previous_verb");
+            }
+
+            if (sentence[i - 1].Pos.StartsWith("NN"))
+            {
+                features.Add("previous_noun");
+            }
+
+            if (sentence[i - 1].Pos.StartsWith("JJ"))
+            {
+                features.Add("previous_adjective");
+            }
+
+            if (sentence[i - 1].Pos == "IN" || sentence[i - 1].Pos == "TO")
+            {
+                features.Add("previous_preposition");
+            }
+
+            if (sentence[i - 1].Pos.EndsWith("DT"))
+            {
                 features.Add("previous_determiner");
-            }
-
-            if (i > 0)
-            {
-                features.Add($"previous_word={sentence[i - 1].Word}");
-                features.Add($"previous_pos-{sentence[i - 1].Pos}");
-                features.Add($"previous_bio={sentence[i - 1].Bio ?? "O"}");
-                features.Add($"previous_word_pos={sentence[i - 1].Word}_{token.Pos}");
-                features.Add($"bigram={sentence[i - 1].Pos}_{token.Pos}");
-
-                if (sentence[i - 1].Pos.StartsWith("VB"))
-                {
-                    features.Add("previous_verb");
-                }
-
-                if (sentence[i - 1].Pos.StartsWith("NN"))
-                {
-                    features.Add("previous_noun");
-                }
-
-                if (sentence[i - 1].Pos.StartsWith("JJ"))
-                {
-                    features.Add("previous_adjective");
-                }
-
-                if (sentence[i - 1].Pos == "IN" || sentence[i - 1].Pos == "TO")
-                {
-                    features.Add("previous_preposition");
-                }
-
-                if (sentence[i - 1].Pos.EndsWith("DT"))
-                {
-                    features.Add("previous_determiner");
-                }
-            }
-            else
-            {
-                features.Add($"previous_word={SentenceStart}");
-                features.Add($"previous_pos={SentenceStart}");
-                features.Add("previous_bio=O");
-                features.Add($"bigram={SentenceStart}_{token.Pos}");
-            }
-
-            if (i > 1)
-            {
-                features.Add($"previous_previous_word={sentence[i - 2].Word}");
-                features.Add($"previous_previous_pos-{sentence[i - 2].Pos}");
-            }
-            else
-            {
-                features.Add($"previous_previous_word={SentenceStart}");
-                features.Add($"previous_previous_pos={SentenceStart}");
-            }
-
-            if (i < sentence.Count - 1)
-            {
-                features.Add($"next_word={sentence[i + 1].Word}");
-                features.Add($"next_pos={sentence[i + 1].Pos}");
-                features.Add($"next_word_pos={sentence[i + 1].Word}_{token.Pos}");
-            }
-            else
-            {
-                features.Add($"next_word={SentenceEnd}");
-                features.Add($"next_pos={SentenceEnd}");
-            }
-
-            if (i < sentence.Count - 2)
-            {
-                features.Add($"next_next_word={sentence[i + 2].Word}");
-                features.Add($"next_next_pos={sentence[i + 2].Pos}");
-            }
-            else
-            {
-                features.Add($"next_next_word={SentenceEnd}");
-                features.Add($"next_next_pos={SentenceEnd}");
-            }
-
-            if (i > 0 && i < sentence.Count - 1)
-            {
-                features.Add($"trigram={sentence[i - 1].Pos}_{token.Pos}_{sentence[i + 1].Pos}");
-            }
-            else if (i > 0)
-            {
-                features.Add($"trigram={sentence[i - 1].Pos}_{token.Pos}_{SentenceEnd}");
-            }
-            else if (i < sentence.Count - 1)
-            {
-                features.Add($"trigram={SentenceStart}_{token.Pos}_{sentence[i + 1].Pos}");
-            }
-            else
-            {
-                features.Add($"trigram={SentenceStart}_{token.Pos}_{SentenceEnd}");
-            }
-
-            if (i > 1 && i < sentence.Count - 1)
-            {
-                features.Add($"fourgram={sentence[i - 2].Pos}_{sentence[i - 1].Pos}_{token.Pos}_{sentence[i + 1].Pos}");
-            }
-            else if (i > 1)
-            {
-                features.Add($"fourgram={sentence[i - 2].Pos}_{sentence[i - 1].Pos}_{token.Pos}_{SentenceEnd}");
-            }
-            else if (i > 0 && i < sentence.Count - 1)
-            {
-                features.Add($"fourgram={SentenceStart}_{sentence[i - 1].Pos}_{token.Pos}_{sentence[i + 1].Pos}");
-            }
-            else if (i < sentence.Count - 1)
-            {
-                features.Add($"fourgram={SentenceStart}_{SentenceStart}_{token.Pos}_{sentence[i + 1].Pos}");
-            }
-            else if (i > 0)
-            {
-                features.Add($"fourgram={SentenceStart}_{sentence[i - 1].Pos}_{token.Pos}_{SentenceEnd}");
-            }
-            else
-            {
-                features.Add($"fourgram={SentenceStart}_{SentenceStart}_{token.Pos}_{SentenceEnd}");
             }
 
             string shape = GetShape(token.Word);

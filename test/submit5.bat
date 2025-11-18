@@ -12,7 +12,7 @@ ChDir ..\..\test
 javac -cp maxent-3.0.0.jar;trove.jar *.java
 java -cp .;maxent-3.0.0.jar;trove.jar -Xmx16g MEtrain training.feature model.chunk
 java -cp .;maxent-3.0.0.jar;trove.jar -Xmx16g MEtag test.feature model.chunk response.chunk
-python3 score.chunk.py ../data/WSJ_24.pos-chunk response.chunk
+python3 score.chunk.py ..\data\WSJ_24.pos-chunk response.chunk
 
 ChDir ..\src\NaturalLanguageProcessing.NounGroupTagger
 
